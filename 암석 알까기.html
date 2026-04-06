@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>암석 마스터: 지질학 대결</title>
+    <style>
+        :root {
+            --primary-bg: #f8fafc;
+            --accent: #6366f1;
+            --board-green: #2d6a4f;
+        }
+
+        * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--primary-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .screen { display: none; padding: 25px; animation: fadeIn 0.3s ease; }
+        .active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        h1 { font-size: 1.5rem; text-align: center; margin-bottom: 20px; color: var(--accent); }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-main { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+        .btn-main:hover { background: #e0e7ff; }
+        .btn-primary { background: var(--accent); color: white; }
+
+        .turn-indicator {
+            text-align: center;
+            padding: 10px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            transition: 0.3s;
+            border: 2px solid transparent;
+        }
+        .p1-turn { background: #ffffff; color: #1e293b; border-color: #6366f1; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
+        .p2-turn { background: #1e293b; color: #ffffff; border-color: #1e293b; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+
+        .visual-box {
+            width: 100%;
+            height: 180px;
+            background: #f1f5f9;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .hint-text { text-align: center; margin-bottom: 15px; font-weight: 500; min-height: 3.5em; font-size: 0.95rem; line-height: 1.5; color: #334155; }
+        
+        .egg-status-bar {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .game-wrapper { position: relative; width: 100%; }
+        #game-canvas {
+            width: 100%;
+            height: 520px;
+            background: var(--board-green);
+            border: 12px solid #5d4037;
+            border-radius: 12px;
+            cursor: crosshair;
+            touch-action: none;
+            display: block;
+        }
+        .current-game-turn {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 20px;
+            background: white;
+            border-radius: 20px;
+            font-weight: 800;
+            z-index: 5;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            border: 2px solid #5d4037;
+            pointer-events: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            text-align: center;
+            padding: 20px;
+        }
+        .modal-active { display: flex; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Home Screen -->
+        <div id="screen-home" class="screen active">
+            <h1>🪨 암석 마스터: 지질학 대결</h1>
+            <p style="text-align: center; color: #64748b; margin-bottom: 30px; line-height: 1.6;">
+                플레이어 1(백)과 플레이어 2(흑)가 암석 퀴즈를 풉니다.<br>
+                정답을 맞춰 획득한 암석으로 상대를 밀어내세요!<br>
+                <strong>질감이 살아있는 13종의 암석이 등장합니다.</strong>
+            </p>
+            <button class="btn btn-primary" onclick="startQuiz()">🎮 대결 시작하기</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="screen-quiz" class="screen">
+            <div id="p-turn-ui" class="turn-indicator">차례 로딩 중...</div>
+            <div id="quiz-progress" style="text-align: right; font-size: 0.8rem; color: #64748b; margin-bottom: 5px;">문제 1 / 10</div>
+            
+            <div class="visual-box" id="rock-visual"></div>
+            <p class="hint-text" id="quiz-hint">문제를 불러오는 중...</p>
+            <div id="quiz-options"></div>
+            
+            <div class="egg-status-bar">
+                <span>⚪ P1 암석: <strong id="p1-egg-count">0</strong>개</span>
+                <span>⚫ P2 암석: <strong id="p2-egg-count">0</strong>개</span>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="screen-game" class="screen" style="padding: 10px;">
+            <div class="game-wrapper">
+                <div id="game-turn-msg" class="current-game-turn">⚪ 플레이어 1 차례</div>
+                <canvas id="game-canvas"></canvas>
+                
+                <div id="game-result-overlay" class="modal-overlay">
+                    <h2 id="winner-text" style="font-size: 1.8rem; margin-bottom: 10px; color: var(--accent);"></h2>
+                    <p style="color: #64748b; margin-bottom: 25px;">승리하였습니다!</p>
+                    <button class="btn btn-primary" style="width: 200px;" onclick="location.reload()">다시 하기</button>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:10px; font-size:0.8rem; color:#64748b;">드래그하여 상대를 밀어내세요!</div>
+        </div>
+
+        <!-- Feedback Overlay -->
+        <div id="feedback-overlay" class="modal-overlay">
+            <h2 id="feedback-title" style="font-size: 1.8rem; margin-bottom: 10px;"></h2>
+            <p id="feedback-msg" style="margin-bottom: 25px; color: #475569;"></p>
+            <button class="btn btn-primary" style="width: 150px;" onclick="closeFeedback()">확인</button>
+        </div>
+    </div>
+
+    <script>
+        // 암석 데이터베이스 (13종)
+        const rockPool = [
+            { name: "현무암", type: "화성암", color: "#262626", pattern: 'pores', hint: "마그마가 지표에서 빠르게 식어 만들어졌으며, 표면에 구멍이 뚫려 있고 색이 어두운 암석은?" },
+            { name: "화강암", type: "화성암", color: "#e5e7eb", pattern: 'crystals', hint: "마그마가 지하 깊은 곳에서 천천히 식어 알갱이가 크고 밝은 바탕에 검은 점이 박힌 암석은?" },
+            { name: "유문암", type: "화성암", color: "#d1d5db", pattern: 'fine', hint: "마그마가 지표 근처에서 빠르게 식었으나, 현무암보다 밝은 색을 띠는 화성암은?" },
+            { name: "반려암", type: "화성암", color: "#171717", pattern: 'dark-crystals', hint: "마그마가 지하 깊은 곳에서 식어 알갱이가 크고 매우 어두운 색을 띠는 암석은?" },
+            { name: "사암", type: "퇴적암", color: "#d97706", pattern: 'sand', hint: "주로 모래가 쌓여서 굳어진 암석으로 손으로 만지면 까칠까칠한 느낌이 나는 퇴적암은?" },
+            { name: "이암", type: "퇴적암", color: "#78350f", pattern: 'smooth', hint: "진흙이나 점토가 쌓여 만들어진 알갱이가 매우 작고 부드러운 퇴적암은?" },
+            { name: "역암", type: "퇴적암", color: "#57534e", pattern: 'pebbles', hint: "자갈 사이에 모래나 진흙이 채워져 굳어진 퇴적암으로 알갱이 크기가 다양한 것은?" },
+            { name: "석회암", type: "퇴적암", color: "#a1a1aa", pattern: 'calcite', hint: "산호나 조개껍데기 성분이 쌓여 만들어졌으며 묽은 염산을 떨어뜨리면 거품이 나는 암석은?" },
+            { name: "편마암", type: "변성암", color: "#525252", pattern: 'stripes', hint: "암석이 높은 열과 압력을 받아 줄무늬(엽리)가 매우 굵고 뚜렷하게 발달한 변성암은?" },
+            { name: "대리암", type: "변성암", color: "#fafaf9", pattern: 'marble', hint: "석회암이 열과 압력을 받아 변한 것으로, 결정이 크고 무늬가 아름다워 조각용으로 쓰이는 것은?" },
+            { name: "규암", type: "변성암", color: "#f5f5f4", pattern: 'quartz', hint: "사암이 높은 열과 압력을 받아 변한 것으로, 매우 단단한 성질을 가진 변성암은?" },
+            { name: "층리", type: "구조", color: "#8b5e3c", pattern: 'layers', hint: "퇴적암에서 나타나는 특징으로, 서로 다른 물질이 겹겹이 쌓여 만들어진 평행한 줄무늬는?" },
+            { name: "엽리", type: "구조", color: "#444444", pattern: 'foliation', hint: "변성암에서 암석이 압력을 받아 알갱이들이 수직 방향으로 눌려 만들어진 줄무늬 구조는?" }
+        ];
+
+        let quizSequence = [];
+        let currentStep = 0;
+        let p1Inventory = [];
+        let p2Inventory = [];
+        let isP1QuizTurn = true;
+
+        function getRockPattern(pattern, color) {
+            let svg = `<svg viewBox="0 0 100 100" width="100%" height="100%">
+                        <defs>
+                            <filter id="shadow"><feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.5"/></filter>
+                        </defs>
+                        <circle cx="50" cy="50" r="45" fill="${color}" stroke="#333" stroke-width="2"/>`;
+            
+            switch(pattern) {
+                case 'pores': // 현무암 구멍
+                    for(let i=0; i<15; i++) {
+                        svg += `<circle cx="${20+Math.random()*60}" cy="${20+Math.random()*60}" r="${1+Math.random()*4}" fill="#000" fill-opacity="0.6"/>`;
+                    }
+                    break;
+                case 'crystals': // 화강암 큰 결정
+                    for(let i=0; i<30; i++) {
+                        let x = 20+Math.random()*60, y = 20+Math.random()*60;
+                        svg += `<rect x="${x}" y="${y}" width="6" height="6" fill="#000" fill-opacity="0.7" transform="rotate(${Math.random()*360}, ${x}, ${y})"/>`;
+                    }
+                    break;
+                case 'pebbles': // 역암 자갈
+                    for(let i=0; i<8; i++) {
+                        svg += `<ellipse cx="${25+Math.random()*50}" cy="${25+Math.random()*50}" rx="${6+Math.random()*10}" ry="${4+Math.random()*8}" fill="#888" stroke="#444" stroke-width="1"/>`;
+                    }
+                    break;
+                case 'sand': // 사암 입자
+                    for(let i=0; i<100; i++) {
+                        svg += `<circle cx="${15+Math.random()*70}" cy="${15+Math.random()*70}" r="1" fill="#fff" fill-opacity="0.3"/>`;
+                    }
+                    break;
+                case 'layers': // 층리
+                case 'stripes': // 편마암 엽리
+                    for(let i=0; i<6; i++) {
+                        let y = 25 + i*10;
+                        svg += `<path d="M 15 ${y} Q 50 ${y+5} 85 ${y}" stroke="${pattern==='layers'?'#5d4037':'#fff'}" stroke-width="${pattern==='layers'?4:2}" fill="none" opacity="0.6"/>`;
+                    }
+                    break;
+                case 'foliation': // 엽리 구조
+                    for(let i=0; i<12; i++) {
+                        let y = 15 + i*6;
+                        svg += `<line x1="15" y1="${y}" x2="85" y2="${y}" stroke="#000" stroke-width="1" opacity="0.4"/>`;
+                    }
+                    break;
+                case 'marble': // 대리암 흐름 무늬
+                    svg += `<path d="M 20 20 Q 50 80 80 20 M 30 80 Q 50 20 70 80" stroke="#ccc" stroke-width="3" fill="none" opacity="0.5"/>`;
+                    break;
+                case 'calcite': // 석회암
+                    svg += `<circle cx="50" cy="50" r="45" fill="url(#grad)" fill-opacity="0.2"/>`;
+                    break;
+                default:
+                    break;
+            }
+            svg += `</svg>`;
+            return svg;
+        }
+
+        function startQuiz() {
+            // 13종 중 랜덤 10개 추출
+            quizSequence = [...rockPool].sort(() => Math.random() - 0.5).slice(0, 10);
+            currentStep = 0; p1Inventory = []; p2Inventory = [];
+            showScreen('screen-quiz');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentStep >= 10) {
+                initGame();
+                return;
+            }
+            isP1QuizTurn = currentStep % 2 === 0;
+            const turnUI = document.getElementById('p-turn-ui');
+            turnUI.innerText = isP1QuizTurn ? "⚪ 플레이어 1 차례" : "⚫ 플레이어 2 차례";
+            turnUI.className = `turn-indicator ${isP1QuizTurn ? 'p1-turn' : 'p2-turn'}`;
+
+            const data = quizSequence[currentStep];
+            document.getElementById('quiz-progress').innerText = `문제 ${currentStep + 1} / 10`;
+            document.getElementById('quiz-hint').innerText = data.hint;
+            document.getElementById('rock-visual').innerHTML = getRockPattern(data.pattern, data.color);
+            
+            const optionsDiv = document.getElementById('quiz-options');
+            optionsDiv.innerHTML = '';
+            let choices = [data.name];
+            while(choices.length < 3) {
+                let r = rockPool[Math.floor(Math.random()*rockPool.length)].name;
+                if(!choices.includes(r)) choices.push(r);
+            }
+            choices.sort(() => Math.random() - 0.5).forEach(c => {
+                const b = document.createElement('button');
+                b.className = 'btn btn-main';
+                b.innerText = c;
+                b.onclick = () => checkAnswer(c === data.name);
+                optionsDiv.appendChild(b);
+            });
+        }
+
+        function checkAnswer(isCorrect) {
+            const overlay = document.getElementById('feedback-overlay');
+            overlay.classList.add('modal-active');
+            const data = quizSequence[currentStep];
+            if (isCorrect) {
+                if(isP1QuizTurn) p1Inventory.push(data); else p2Inventory.push(data);
+                document.getElementById('feedback-title').innerText = "✅ 정답!";
+                document.getElementById('feedback-msg').innerText = `'${data.name}' 획득 완료!`;
+            } else {
+                document.getElementById('feedback-title').innerText = "❌ 오답";
+                document.getElementById('feedback-msg').innerText = `정답은 '${data.name}'입니다.`;
+            }
+            document.getElementById('p1-egg-count').innerText = p1Inventory.length;
+            document.getElementById('p2-egg-count').innerText = p2Inventory.length;
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedback-overlay').classList.remove('modal-active');
+            currentStep++;
+            loadQuestion();
+        }
+
+        // --- 물리 엔진 ---
+        let canvas, ctx;
+        let allPieces = []; 
+        let selectedPiece = null;
+        let dragStart = null;
+        let gameTurnP1 = true;
+        let isMoving = false;
+        let gameOver = false;
+
+        function initGame() {
+            showScreen('screen-game');
+            canvas = document.getElementById('game-canvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+
+            allPieces = [];
+
+            // 고정된 다각형 형태의 장애물 암석 생성 (변경 금지 조건)
+            const obstacleRocks = rockPool.slice(0, 5);
+            for(let i=0; i<5; i++) {
+                const rock = obstacleRocks[i];
+                const radius = 18 + (i * 2); 
+                const ox = canvas.width * 0.2 + (i * (canvas.width * 0.15));
+                const oy = canvas.height * 0.45 + (Math.sin(i * 1.5) * 60);
+                allPieces.push(new RockPiece(ox, oy, radius, rock, null, true));
+            }
+
+            // 인벤토리가 비었을 경우 기본 지급
+            if(p1Inventory.length === 0) p1Inventory.push(rockPool[1]);
+            if(p2Inventory.length === 0) p2Inventory.push(rockPool[0]);
+
+            // 플레이어 알 배치
+            p1Inventory.forEach((rock, i) => {
+                allPieces.push(new RockPiece(canvas.width/(p1Inventory.length+1)*(i+1), canvas.height - 70, 18, rock, true));
+            });
+            p2Inventory.forEach((rock, i) => {
+                allPieces.push(new RockPiece(canvas.width/(p2Inventory.length+1)*(i+1), 70, 18, rock, false));
+            });
+
+            canvas.addEventListener('mousedown', startDrag);
+            canvas.addEventListener('mousemove', doDrag);
+            window.addEventListener('mouseup', endDrag);
+            canvas.addEventListener('touchstart', (e) => startDrag(e.touches[0]), {passive:false});
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); doDrag(e.touches[0]); }, {passive:false});
+            window.addEventListener('touchend', endDrag);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        class RockPiece {
+            constructor(x, y, r, rockData, isP1, isObstacle = false) {
+                this.x = x; this.y = y; this.r = r;
+                this.rock = rockData; this.isP1 = isP1;
+                this.isObstacle = isObstacle;
+                this.vx = 0; this.vy = 0;
+                this.friction = 0.982;
+                this.active = true;
+                this.mass = isObstacle ? (r * 0.8) : 1;
+                
+                // 장애물용 다각형 포인트 (고정 형태)
+                if(this.isObstacle) {
+                    this.points = [];
+                    const sides = 6 + Math.floor(Math.random() * 3);
+                    for(let i=0; i<sides; i++) {
+                        const angle = (i / sides) * Math.PI * 2;
+                        this.points.push(this.r * (0.85 + (Math.abs(Math.sin(i*1.5)) * 0.25)));
+                    }
+                }
+            }
+            draw() {
+                if(!this.active) return;
+                
+                ctx.save();
+                // 질감 그리기 (패턴 적용을 위한 클리핑)
+                ctx.beginPath();
+                if(this.isObstacle) {
+                    this.points.forEach((dist, i) => {
+                        const angle = (i / this.points.length) * Math.PI * 2;
+                        const px = this.x + Math.cos(angle) * dist;
+                        const py = this.y + Math.sin(angle) * dist;
+                        if(i===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                    });
+                    ctx.closePath();
+                } else {
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+                }
+                ctx.clip();
+                
+                // 기본 색상
+                ctx.fillStyle = this.rock.color;
+                ctx.fillRect(this.x - this.r * 1.5, this.y - this.r * 1.5, this.r * 3, this.r * 3);
+
+                // 간단한 질감 효과 (캔버스 직접 그리기)
+                ctx.fillStyle = "rgba(0,0,0,0.1)";
+                if (this.rock.pattern === 'pores') {
+                    for(let i=0; i<5; i++) {
+                        ctx.beginPath();
+                        ctx.arc(this.x + Math.sin(i)*10, this.y + Math.cos(i)*10, 3, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                } else if (this.rock.pattern === 'stripes' || this.rock.pattern === 'layers') {
+                    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                    ctx.lineWidth = 3;
+                    for(let i=-2; i<=2; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.x - this.r, this.y + i*6);
+                        ctx.lineTo(this.x + this.r, this.y + i*6);
+                        ctx.stroke();
+                    }
+                }
+
+                ctx.restore();
+
+                // 외곽선
+                ctx.save();
+                ctx.beginPath();
+                if(this.isObstacle) {
+                    this.points.forEach((dist, i) => {
+                        const angle = (i / this.points.length) * Math.PI * 2;
+                        const px = this.x + Math.cos(angle) * dist;
+                        const py = this.y + Math.sin(angle) * dist;
+                        if(i===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                    });
+                    ctx.closePath();
+                    ctx.strokeStyle = "#171717";
+                    ctx.lineWidth = 3;
+                } else {
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+                    ctx.strokeStyle = this.isP1 ? "#ffffff" : "#000000";
+                    ctx.lineWidth = 2.5;
+                }
+                ctx.stroke();
+                ctx.restore();
+
+                // 캡슐형 암흑 이름표
+                ctx.save();
+                const isCurrentTurn = !this.isObstacle && gameTurnP1 === this.isP1;
+                const alpha = (isCurrentTurn || this.isObstacle) ? 1 : 0.6;
+                
+                ctx.font = "bold 11px Pretendard, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                
+                const text = this.rock.name;
+                const textWidth = ctx.measureText(text).width;
+                const rectW = textWidth + 14;
+                const rectH = 18;
+                const rectX = this.x - rectW / 2;
+                const rectY = this.y + this.r + 6;
+
+                // 캡슐 배경
+                ctx.beginPath();
+                const rad = rectH / 2;
+                ctx.roundRect(rectX, rectY, rectW, rectH, rad);
+                ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.8})`;
+                ctx.fill();
+
+                // 글자
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.fillText(text, this.x, rectY + rectH / 2 + 1);
+                
+                ctx.restore();
+
+                // 현재 차례 강조
+                if (isCurrentTurn && !isMoving && !gameOver) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.r + 5, 0, Math.PI*2);
+                    ctx.strokeStyle = "rgba(255, 255, 0, 0.6)";
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([4, 2]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+            update() {
+                if(!this.active) return;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+                
+                if(Math.abs(this.vx) < 0.1) this.vx = 0;
+                if(Math.abs(this.vy) < 0.1) this.vy = 0;
+
+                // 화면 밖 체크
+                if(this.x < -this.r || this.x > canvas.width + this.r || this.y < -this.r || this.y > canvas.height + this.r) {
+                    this.active = false; this.vx = 0; this.vy = 0;
+                }
+            }
+        }
+
+        function gameLoop() {
+            if(gameOver) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 충돌 감지
+            for(let i=0; i<allPieces.length; i++) {
+                for(let j=i+1; j<allPieces.length; j++) {
+                    handleCollision(allPieces[i], allPieces[j]);
+                }
+            }
+
+            let anyMoving = false;
+            allPieces.forEach(p => {
+                p.update();
+                p.draw();
+                if(p.active && (p.vx !== 0 || p.vy !== 0)) anyMoving = true;
+            });
+
+            if (isMoving && !anyMoving) {
+                isMoving = false;
+                gameTurnP1 = !gameTurnP1;
+                updateGameTurnUI();
+                checkWinner();
+            }
+
+            // 가이드선 드로잉
+            if(selectedPiece && dragStart && !isMoving) {
+                const dx = selectedPiece.x - dragStart.x;
+                const dy = selectedPiece.y - dragStart.y;
+                ctx.beginPath();
+                ctx.setLineDash([6, 3]);
+                ctx.moveTo(selectedPiece.x, selectedPiece.y);
+                ctx.lineTo(selectedPiece.x + dx, selectedPiece.y + dy);
+                ctx.strokeStyle = "rgba(255,255,255,0.6)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleCollision(p1, p2) {
+            if(!p1.active || !p2.active) return;
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if(dist < p1.r + p2.r) {
+                const overlap = (p1.r + p2.r - dist) / 2;
+                const nx = dx / dist; const ny = dy / dist;
+                
+                const mTotal = p1.mass + p2.mass;
+                const m1Ratio = p2.mass / mTotal;
+                const m2Ratio = p1.mass / mTotal;
+
+                p1.x -= nx * overlap * m1Ratio * 2.1;
+                p1.y -= ny * overlap * m1Ratio * 2.1;
+                p2.x += nx * overlap * m2Ratio * 2.1;
+                p2.y += ny * overlap * m2Ratio * 2.1;
+
+                const v1n = p1.vx * nx + p1.vy * ny;
+                const v2n = p2.vx * nx + p2.vy * ny;
+                const elasticity = 0.85;
+
+                const impulse = (2 * (v1n - v2n)) / mTotal;
+                
+                p1.vx -= impulse * p2.mass * nx * elasticity;
+                p1.vy -= impulse * p2.mass * ny * elasticity;
+                p2.vx += impulse * p1.mass * nx * elasticity;
+                p2.vy += impulse * p1.mass * ny * elasticity;
+            }
+        }
+
+        function startDrag(e) {
+            if(isMoving || gameOver) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            allPieces.forEach(p => {
+                if(!p.isObstacle && p.isP1 === gameTurnP1 && p.active) {
+                    if(Math.sqrt((p.x-x)**2 + (p.y-y)**2) < p.r * 2.5) {
+                        selectedPiece = p; dragStart = {x, y};
+                    }
+                }
+            });
+        }
+
+        function doDrag(e) {
+            if(!selectedPiece) return;
+            const rect = canvas.getBoundingClientRect();
+            dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+
+        function endDrag() {
+            if(selectedPiece && dragStart) {
+                const dx = selectedPiece.x - dragStart.x;
+                const dy = selectedPiece.y - dragStart.y;
+                const pwr = Math.min(Math.sqrt(dx*dx + dy*dy), 110);
+                if(pwr > 8) {
+                    const angle = Math.atan2(dy, dx);
+                    selectedPiece.vx = Math.cos(angle) * pwr * 0.22;
+                    selectedPiece.vy = Math.sin(angle) * pwr * 0.22;
+                    isMoving = true;
+                }
+            }
+            selectedPiece = null; dragStart = null;
+        }
+
+        function updateGameTurnUI() {
+            const msg = document.getElementById('game-turn-msg');
+            msg.innerText = gameTurnP1 ? "⚪ 플레이어 1 차례" : "⚫ 플레이어 2 차례";
+            msg.style.background = gameTurnP1 ? "white" : "#1e293b";
+            msg.style.color = gameTurnP1 ? "#1e293b" : "white";
+        }
+
+        function checkWinner() {
+            const p1Rem = allPieces.filter(p => !p.isObstacle && p.isP1 && p.active).length;
+            const p2Rem = allPieces.filter(p => !p.isObstacle && p.isP1 === false && p.active).length;
+            
+            if(p1Rem === 0 || p2Rem === 0) {
+                gameOver = true;
+                const overlay = document.getElementById('game-result-overlay');
+                document.getElementById('winner-text').innerText = p1Rem > 0 ? "🏆 플레이어 1 승리!" : "🏆 플레이어 2 승리!";
+                overlay.classList.add('modal-active');
+            }
+        }
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = 520;
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>
