@@ -361,34 +361,37 @@
         .joker-type-btn.situation { background: linear-gradient(135deg, #3498db, #2980b9); }
         .joker-type-icon { font-size: 2rem; }
 
+        /* 조커 옵션 - 한 줄에 5개 표시 */
         .joker-options {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
-            gap: 12px;
+            gap: 8px;
             margin: 20px 0;
+            flex-wrap: nowrap;
         }
 
         .joker-option {
-            padding: 12px 18px;
-            font-size: 1rem;
+            padding: 10px 12px;
+            font-size: 0.85rem;
             font-family: 'Jua', sans-serif;
             border: none;
-            border-radius: 15px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
             color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
-            min-width: 90px;
+            gap: 4px;
+            min-width: 70px;
+            flex: 1;
+            max-width: 90px;
         }
 
         .joker-option:hover { transform: scale(1.1); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .joker-option.rock-opt { background: linear-gradient(135deg, #e67e22, #d35400); }
         .joker-option.situation-opt { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .joker-option-icon { font-size: 1.5rem; }
+        .joker-option-icon { font-size: 1.3rem; }
 
         .result-screen {
             text-align: center;
@@ -516,20 +519,6 @@
             padding: 30px;
         }
 
-        @media (max-width: 768px) {
-            .title { font-size: 1.8rem; }
-            .card { width: 70px; height: 100px; font-size: 0.65rem; }
-            .card-icon { font-size: 1.5rem; }
-            .slot { width: 70px; height: 100px; font-size: 0.65rem; }
-            .stat-box { padding: 10px 15px; font-size: 0.9rem; }
-            .mode-btn { padding: 20px 30px; font-size: 1.2rem; }
-            .mode-icon { font-size: 2rem; }
-            .btn { padding: 12px 20px; font-size: 0.95rem; }
-            .joker-option { min-width: 70px; padding: 10px 12px; font-size: 0.85rem; }
-            .result-buttons { flex-direction: column; align-items: center; }
-            .ranking-table th, .ranking-table td { padding: 10px; font-size: 0.95rem; }
-        }
-
         /* 제작자 표시 */
         .credit {
             position: fixed;
@@ -540,12 +529,28 @@
             z-index: 100;
         }
 
+        @media (max-width: 768px) {
+            .title { font-size: 1.8rem; }
+            .card { width: 70px; height: 100px; font-size: 0.65rem; }
+            .card-icon { font-size: 1.5rem; }
+            .slot { width: 70px; height: 100px; font-size: 0.65rem; }
+            .stat-box { padding: 10px 15px; font-size: 0.9rem; }
+            .mode-btn { padding: 20px 30px; font-size: 1.2rem; }
+            .mode-icon { font-size: 2rem; }
+            .btn { padding: 12px 20px; font-size: 0.95rem; }
+            .joker-options { flex-wrap: wrap; }
+            .joker-option { min-width: 60px; padding: 8px 10px; font-size: 0.75rem; }
+            .joker-option-icon { font-size: 1.1rem; }
+            .result-buttons { flex-direction: column; align-items: center; }
+            .ranking-table th, .ranking-table td { padding: 10px; font-size: 0.95rem; }
+        }
+
     </style>
 </head>
 <body>
 
     <!-- 제작자 표시 -->
-    <div class="credit">제작 : 삼각산중학교 형준T</div>
+    <div class="credit">제작 : 삼각산중학교 최형준</div>
 
     <div class="game-container">
         <div id="startScreen" class="start-screen">
@@ -766,16 +771,9 @@
         const hallOfFameData = [
             // ↓↓↓ 여기부터 수정하세요! ↓↓↓
 
-            { ban: "2-9", name: "강*현", score: 100 },
-            { ban: "2-9", name: "나*우", score: 100 },
-            { ban: "2-11", name: "노*호", score: 100 },
-            { ban: "2-9", name: "이*존", score: 110 },
-            { ban: "2-11", name: "김*서", score: 110 },
-            { ban: "2-11", name: "홍*주", score: 100 },
-            { ban: "2-11", name: "정*울", score: 110 },
-            { ban: "2-11", name: "잼민서", score: 100 },
-            { ban: "2-11", name: "김*연", score: 100 },
-            { ban: "2-11", name: "치링채린", score: 100 },
+            { ban: "2-1", name: "홍길동", score: 100 },
+            { ban: "2-3", name: "김철수", score: 90 },
+            { ban: "2-2", name: "이영희", score: 80 },
 
             // ↑↑↑ 여기까지 수정하세요! ↑↑↑
         ];
@@ -787,56 +785,35 @@
         아래는 게임 코드입니다. 수정하지 않아도 됩니다!
         */
 
+        // 카드 생성 함수 (12장씩)
+        function createCards(type, name, icon, count) {
+            const cards = [];
+            for (let i = 0; i < count; i++) {
+                cards.push({ type, name, icon });
+            }
+            return cards;
+        }
+
+        // 암석 카드 60장 (각 12장씩)
         const rockCards = [
-            { type: 'rock', name: '화성암', icon: '🪨' },
-            { type: 'rock', name: '화성암', icon: '🪨' },
-            { type: 'rock', name: '화성암', icon: '🪨' },
-            { type: 'rock', name: '화성암', icon: '🪨' },
-            { type: 'rock', name: '변성암', icon: '💎' },
-            { type: 'rock', name: '변성암', icon: '💎' },
-            { type: 'rock', name: '변성암', icon: '💎' },
-            { type: 'rock', name: '변성암', icon: '💎' },
-            { type: 'rock', name: '마그마', icon: '🌋' },
-            { type: 'rock', name: '마그마', icon: '🌋' },
-            { type: 'rock', name: '마그마', icon: '🌋' },
-            { type: 'rock', name: '마그마', icon: '🌋' },
-            { type: 'rock', name: '퇴적물', icon: '🏖️' },
-            { type: 'rock', name: '퇴적물', icon: '🏖️' },
-            { type: 'rock', name: '퇴적물', icon: '🏖️' },
-            { type: 'rock', name: '퇴적물', icon: '🏖️' },
-            { type: 'rock', name: '퇴적암', icon: '🧱' },
-            { type: 'rock', name: '퇴적암', icon: '🧱' },
-            { type: 'rock', name: '퇴적암', icon: '🧱' },
-            { type: 'rock', name: '퇴적암', icon: '🧱' },
+            ...createCards('rock', '화성암', '🪨', 12),
+            ...createCards('rock', '변성암', '💎', 12),
+            ...createCards('rock', '마그마', '🌋', 12),
+            ...createCards('rock', '퇴적물', '🏖️', 12),
+            ...createCards('rock', '퇴적암', '🧱', 12),
         ];
 
+        // 상황 카드 60장 (각 12장씩)
         const situationCards = [
-            { type: 'situation', name: '녹음', icon: '🔥' },
-            { type: 'situation', name: '녹음', icon: '🔥' },
-            { type: 'situation', name: '녹음', icon: '🔥' },
-            { type: 'situation', name: '녹음', icon: '🔥' },
-            { type: 'situation', name: '식음', icon: '❄️' },
-            { type: 'situation', name: '식음', icon: '❄️' },
-            { type: 'situation', name: '식음', icon: '❄️' },
-            { type: 'situation', name: '식음', icon: '❄️' },
-            { type: 'situation', name: '풍화침식', icon: '💨' },
-            { type: 'situation', name: '풍화침식', icon: '💨' },
-            { type: 'situation', name: '풍화침식', icon: '💨' },
-            { type: 'situation', name: '풍화침식', icon: '💨' },
-            { type: 'situation', name: '열과압력', icon: '🔶' },
-            { type: 'situation', name: '열과압력', icon: '🔶' },
-            { type: 'situation', name: '열과압력', icon: '🔶' },
-            { type: 'situation', name: '열과압력', icon: '🔶' },
-            { type: 'situation', name: '다져지고굳어짐', icon: '⬇️' },
-            { type: 'situation', name: '다져지고굳어짐', icon: '⬇️' },
-            { type: 'situation', name: '다져지고굳어짐', icon: '⬇️' },
-            { type: 'situation', name: '다져지고굳어짐', icon: '⬇️' },
+            ...createCards('situation', '녹음', '🔥', 12),
+            ...createCards('situation', '식음', '❄️', 12),
+            ...createCards('situation', '풍화침식', '💨', 12),
+            ...createCards('situation', '열과압력', '🔶', 12),
+            ...createCards('situation', '다져지고굳어짐', '⬇️', 12),
         ];
 
-        const jokerCards = [
-            { type: 'joker', name: '조커', icon: '🃏' },
-            { type: 'joker', name: '조커', icon: '🃏' },
-        ];
+        // 조커 카드 6장
+        const jokerCards = createCards('joker', '조커', '🃏', 6);
 
         const rockOptions = [
             { name: '마그마', icon: '🌋' },
