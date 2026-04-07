@@ -529,7 +529,7 @@
             .result-buttons { flex-direction: column; align-items: center; }
             .ranking-table th, .ranking-table td { padding: 10px; font-size: 0.95rem; }
         }
-    
+
         /* 제작자 표시 */
         .credit {
             position: fixed;
@@ -1245,9 +1245,64 @@ ${rock1Name} → ${sitName} → ${rock2Name}
         }
 
         function doReshuffle() {
+            // 현재 손패를 덱에 반납
             deck.push(...getCurrentHand());
             shuffleDeck();
-            setCurrentHand(drawCards(7));
+
+            // 덱을 암석과 상황+조커로 분리
+            const rockDeck = [];
+            const situationDeck = [];
+            const restDeck = [];
+
+            deck.forEach(card => {
+                if (card.type === 'rock') rockDeck.push(card);
+                else if (card.type === 'situation') situationDeck.push(card);
+                else restDeck.push(card); // 조커
+            });
+
+            // 각 덱 섞기
+            for (let arr of [rockDeck, situationDeck, restDeck]) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+            }
+
+            // 최소 암석 3개, 상황 2개 뽑기
+            const newHand = [];
+
+            // 암석 3개 뽑기
+            for (let i = 0; i < 3 && rockDeck.length > 0; i++) {
+                newHand.push(rockDeck.pop());
+            }
+
+            // 상황 2개 뽑기
+            for (let i = 0; i < 2 && situationDeck.length > 0; i++) {
+                newHand.push(situationDeck.pop());
+            }
+
+            // 나머지 덱 합치기
+            const remainingDeck = [...rockDeck, ...situationDeck, ...restDeck];
+            for (let i = remainingDeck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [remainingDeck[i], remainingDeck[j]] = [remainingDeck[j], remainingDeck[i]];
+            }
+
+            // 나머지 2장 랜덤으로 뽑기
+            for (let i = 0; i < 2 && remainingDeck.length > 0; i++) {
+                newHand.push(remainingDeck.pop());
+            }
+
+            // 덱 재구성
+            deck = remainingDeck;
+
+            // 손패 섞기 (카드 순서 랜덤)
+            for (let i = newHand.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newHand[i], newHand[j]] = [newHand[j], newHand[i]];
+            }
+
+            setCurrentHand(newHand);
             selectedCards = [null, null, null];
             jokerUsedAs = [null, null, null];
             updateSlots();
