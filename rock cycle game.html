@@ -361,37 +361,34 @@
         .joker-type-btn.situation { background: linear-gradient(135deg, #3498db, #2980b9); }
         .joker-type-icon { font-size: 2rem; }
 
-        /* 조커 옵션 - 한 줄에 5개 표시 */
         .joker-options {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 8px;
+            gap: 12px;
             margin: 20px 0;
-            flex-wrap: nowrap;
         }
 
         .joker-option {
-            padding: 10px 12px;
-            font-size: 0.85rem;
+            padding: 12px 18px;
+            font-size: 1rem;
             font-family: 'Jua', sans-serif;
             border: none;
-            border-radius: 12px;
+            border-radius: 15px;
             cursor: pointer;
             transition: all 0.3s ease;
             color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
-            min-width: 70px;
-            flex: 1;
-            max-width: 90px;
+            gap: 5px;
+            min-width: 90px;
         }
 
         .joker-option:hover { transform: scale(1.1); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .joker-option.rock-opt { background: linear-gradient(135deg, #e67e22, #d35400); }
         .joker-option.situation-opt { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .joker-option-icon { font-size: 1.3rem; }
+        .joker-option-icon { font-size: 1.5rem; }
 
         .result-screen {
             text-align: center;
@@ -519,6 +516,20 @@
             padding: 30px;
         }
 
+        @media (max-width: 768px) {
+            .title { font-size: 1.8rem; }
+            .card { width: 70px; height: 100px; font-size: 0.65rem; }
+            .card-icon { font-size: 1.5rem; }
+            .slot { width: 70px; height: 100px; font-size: 0.65rem; }
+            .stat-box { padding: 10px 15px; font-size: 0.9rem; }
+            .mode-btn { padding: 20px 30px; font-size: 1.2rem; }
+            .mode-icon { font-size: 2rem; }
+            .btn { padding: 12px 20px; font-size: 0.95rem; }
+            .joker-option { min-width: 70px; padding: 10px 12px; font-size: 0.85rem; }
+            .result-buttons { flex-direction: column; align-items: center; }
+            .ranking-table th, .ranking-table td { padding: 10px; font-size: 0.95rem; }
+        }
+    
         /* 제작자 표시 */
         .credit {
             position: fixed;
@@ -529,28 +540,12 @@
             z-index: 100;
         }
 
-        @media (max-width: 768px) {
-            .title { font-size: 1.8rem; }
-            .card { width: 70px; height: 100px; font-size: 0.65rem; }
-            .card-icon { font-size: 1.5rem; }
-            .slot { width: 70px; height: 100px; font-size: 0.65rem; }
-            .stat-box { padding: 10px 15px; font-size: 0.9rem; }
-            .mode-btn { padding: 20px 30px; font-size: 1.2rem; }
-            .mode-icon { font-size: 2rem; }
-            .btn { padding: 12px 20px; font-size: 0.95rem; }
-            .joker-options { flex-wrap: wrap; }
-            .joker-option { min-width: 60px; padding: 8px 10px; font-size: 0.75rem; }
-            .joker-option-icon { font-size: 1.1rem; }
-            .result-buttons { flex-direction: column; align-items: center; }
-            .ranking-table th, .ranking-table td { padding: 10px; font-size: 0.95rem; }
-        }
-
     </style>
 </head>
 <body>
 
     <!-- 제작자 표시 -->
-    <div class="credit">제작 : 삼각산중학교 최형준</div>
+    <div class="credit">제작 : 삼각산중학교 형준T</div>
 
     <div class="game-container">
         <div id="startScreen" class="start-screen">
@@ -771,16 +766,16 @@
         const hallOfFameData = [
             // ↓↓↓ 여기부터 수정하세요! ↓↓↓
 
-            { ban: "2-11", name: "문*윤", score: 170 },
-            { ban: "2-3", name: "이*재", score: 150 },
-            { ban: "2-12", name: "박*람", score: 150 }
-            { ban: "2-8", name: "99세 할머니", score: 170 },
-            { ban: "2-7", name: "안*우", score: 250 },
-            { ban: "2-8", name: "이*영", score: 140 },
-            { ban: "2-7", name: "김*온", score: 200 },
-            { ban: "2-7", name: "이*현", score: 150 },
-            { ban: "2-8", name: "천지개벽", score: 190 },
-            { ban: "2-8", name: "김*율", score: 170 },
+            { ban: "2-", name: "김**", score: 80 },
+            { ban: "2-", name: "이**", score: 70 },
+            { ban: "2-", name: "박**", score: 60 },
+            { ban: "2-", name: "정**", score: 50 },
+            { ban: "2-", name: "최**", score: 50 },
+            { ban: "2-", name: "강**", score: 40 },
+            { ban: "2-", name: "윤**", score: 40 },
+            { ban: "2-", name: "임**", score: 30 },
+            { ban: "2-", name: "송**", score: 30 },
+            { ban: "2-", name: "한**", score: 20 },
 
             // ↑↑↑ 여기까지 수정하세요! ↑↑↑
         ];
@@ -792,35 +787,56 @@
         아래는 게임 코드입니다. 수정하지 않아도 됩니다!
         */
 
-        // 카드 생성 함수 (12장씩)
-        function createCards(type, name, icon, count) {
-            const cards = [];
-            for (let i = 0; i < count; i++) {
-                cards.push({ type, name, icon });
-            }
-            return cards;
-        }
-
-        // 암석 카드 60장 (각 12장씩)
         const rockCards = [
-            ...createCards('rock', '화성암', '🪨', 12),
-            ...createCards('rock', '변성암', '💎', 12),
-            ...createCards('rock', '마그마', '🌋', 12),
-            ...createCards('rock', '퇴적물', '🏖️', 12),
-            ...createCards('rock', '퇴적암', '🧱', 12),
+            { type: 'rock', name: '화성암', icon: '🪨' },
+            { type: 'rock', name: '화성암', icon: '🪨' },
+            { type: 'rock', name: '화성암', icon: '🪨' },
+            { type: 'rock', name: '화성암', icon: '🪨' },
+            { type: 'rock', name: '변성암', icon: '💎' },
+            { type: 'rock', name: '변성암', icon: '💎' },
+            { type: 'rock', name: '변성암', icon: '💎' },
+            { type: 'rock', name: '변성암', icon: '💎' },
+            { type: 'rock', name: '마그마', icon: '🌋' },
+            { type: 'rock', name: '마그마', icon: '🌋' },
+            { type: 'rock', name: '마그마', icon: '🌋' },
+            { type: 'rock', name: '마그마', icon: '🌋' },
+            { type: 'rock', name: '퇴적물', icon: '🏖️' },
+            { type: 'rock', name: '퇴적물', icon: '🏖️' },
+            { type: 'rock', name: '퇴적물', icon: '🏖️' },
+            { type: 'rock', name: '퇴적물', icon: '🏖️' },
+            { type: 'rock', name: '퇴적암', icon: '🧱' },
+            { type: 'rock', name: '퇴적암', icon: '🧱' },
+            { type: 'rock', name: '퇴적암', icon: '🧱' },
+            { type: 'rock', name: '퇴적암', icon: '🧱' },
         ];
 
-        // 상황 카드 60장 (각 12장씩)
         const situationCards = [
-            ...createCards('situation', '녹음', '🔥', 12),
-            ...createCards('situation', '식음', '❄️', 12),
-            ...createCards('situation', '풍화침식', '💨', 12),
-            ...createCards('situation', '열과압력', '🔶', 12),
-            ...createCards('situation', '다져지고굳어짐', '⬇️', 12),
+            { type: 'situation', name: '녹음', icon: '🔥' },
+            { type: 'situation', name: '녹음', icon: '🔥' },
+            { type: 'situation', name: '녹음', icon: '🔥' },
+            { type: 'situation', name: '녹음', icon: '🔥' },
+            { type: 'situation', name: '식음', icon: '❄️' },
+            { type: 'situation', name: '식음', icon: '❄️' },
+            { type: 'situation', name: '식음', icon: '❄️' },
+            { type: 'situation', name: '식음', icon: '❄️' },
+            { type: 'situation', name: '풍화침식', icon: '💨' },
+            { type: 'situation', name: '풍화침식', icon: '💨' },
+            { type: 'situation', name: '풍화침식', icon: '💨' },
+            { type: 'situation', name: '풍화침식', icon: '💨' },
+            { type: 'situation', name: '열과압력', icon: '🔶' },
+            { type: 'situation', name: '열과압력', icon: '🔶' },
+            { type: 'situation', name: '열과압력', icon: '🔶' },
+            { type: 'situation', name: '열과압력', icon: '🔶' },
+            { type: 'situation', name: '다져지고굳어짐', icon: '⬇️' },
+            { type: 'situation', name: '다져지고굳어짐', icon: '⬇️' },
+            { type: 'situation', name: '다져지고굳어짐', icon: '⬇️' },
+            { type: 'situation', name: '다져지고굳어짐', icon: '⬇️' },
         ];
 
-        // 조커 카드 6장
-        const jokerCards = createCards('joker', '조커', '🃏', 6);
+        const jokerCards = [
+            { type: 'joker', name: '조커', icon: '🃏' },
+            { type: 'joker', name: '조커', icon: '🃏' },
+        ];
 
         const rockOptions = [
             { name: '마그마', icon: '🌋' },
@@ -1229,64 +1245,9 @@ ${rock1Name} → ${sitName} → ${rock2Name}
         }
 
         function doReshuffle() {
-            // 현재 손패를 덱에 반납
             deck.push(...getCurrentHand());
             shuffleDeck();
-
-            // 덱을 암석과 상황+조커로 분리
-            const rockDeck = [];
-            const situationDeck = [];
-            const restDeck = [];
-
-            deck.forEach(card => {
-                if (card.type === 'rock') rockDeck.push(card);
-                else if (card.type === 'situation') situationDeck.push(card);
-                else restDeck.push(card); // 조커
-            });
-
-            // 각 덱 섞기
-            for (let arr of [rockDeck, situationDeck, restDeck]) {
-                for (let i = arr.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [arr[i], arr[j]] = [arr[j], arr[i]];
-                }
-            }
-
-            // 최소 암석 3개, 상황 2개 뽑기
-            const newHand = [];
-
-            // 암석 3개 뽑기
-            for (let i = 0; i < 3 && rockDeck.length > 0; i++) {
-                newHand.push(rockDeck.pop());
-            }
-
-            // 상황 2개 뽑기
-            for (let i = 0; i < 2 && situationDeck.length > 0; i++) {
-                newHand.push(situationDeck.pop());
-            }
-
-            // 나머지 덱 합치기
-            const remainingDeck = [...rockDeck, ...situationDeck, ...restDeck];
-            for (let i = remainingDeck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [remainingDeck[i], remainingDeck[j]] = [remainingDeck[j], remainingDeck[i]];
-            }
-
-            // 나머지 2장 랜덤으로 뽑기
-            for (let i = 0; i < 2 && remainingDeck.length > 0; i++) {
-                newHand.push(remainingDeck.pop());
-            }
-
-            // 덱 재구성
-            deck = remainingDeck;
-
-            // 손패 섞기 (카드 순서 랜덤)
-            for (let i = newHand.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [newHand[i], newHand[j]] = [newHand[j], newHand[i]];
-            }
-
-            setCurrentHand(newHand);
+            setCurrentHand(drawCards(7));
             selectedCards = [null, null, null];
             jokerUsedAs = [null, null, null];
             updateSlots();
