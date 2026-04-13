@@ -365,13 +365,13 @@
             display: flex;
             flex-wrap: nowrap;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             margin: 20px 0;
         }
 
         .joker-option {
-            padding: 10px 8px;
-            font-size: 0.85rem;
+            padding: 14px 8px;
+            font-size: 1rem;
             font-family: 'Jua', sans-serif;
             border: none;
             border-radius: 15px;
@@ -381,16 +381,16 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             min-width: 0;
             flex: 1;
-            max-width: 90px;
+            max-width: 110px;
         }
 
         .joker-option:hover { transform: scale(1.1); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .joker-option.rock-opt { background: linear-gradient(135deg, #e67e22, #d35400); }
         .joker-option.situation-opt { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .joker-option-icon { font-size: 1.5rem; }
+        .joker-option-icon { font-size: 2rem; }
 
         .result-screen {
             text-align: center;
@@ -697,7 +697,7 @@
             <div class="modal-title">💡 잠깐! 힌트가 있어요!</div>
             <div class="modal-text" id="hintText"></div>
             <div class="hint-timer" id="hintTimer">10</div>
-            <p style="color: #999;">힌트를 확인하고 기다려주세요...</p>
+            <p style="color: #999;">힌트를 확인하고 원래 카드로 다시 도전해보세요!</p>
         </div>
     </div>
 
@@ -1239,7 +1239,6 @@ ${rock1Name} → ${sitName} → ${rock2Name}
                         clearInterval(hintInterval);
                         hintInterval = null;
                         document.getElementById('hintModal').classList.remove('show');
-                        doReshuffle();
                     }
                 }, 1000);
             } else {
