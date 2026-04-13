@@ -363,15 +363,15 @@
 
         .joker-options {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             justify-content: center;
-            gap: 12px;
+            gap: 8px;
             margin: 20px 0;
         }
 
         .joker-option {
-            padding: 12px 18px;
-            font-size: 1rem;
+            padding: 10px 8px;
+            font-size: 0.85rem;
             font-family: 'Jua', sans-serif;
             border: none;
             border-radius: 15px;
@@ -381,8 +381,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
-            min-width: 90px;
+            gap: 4px;
+            min-width: 0;
+            flex: 1;
+            max-width: 90px;
         }
 
         .joker-option:hover { transform: scale(1.1); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
@@ -525,7 +527,7 @@
             .mode-btn { padding: 20px 30px; font-size: 1.2rem; }
             .mode-icon { font-size: 2rem; }
             .btn { padding: 12px 20px; font-size: 0.95rem; }
-            .joker-option { min-width: 70px; padding: 10px 12px; font-size: 0.85rem; }
+            .joker-option { min-width: 0; flex: 1; padding: 8px 4px; font-size: 0.75rem; }
             .result-buttons { flex-direction: column; align-items: center; }
             .ranking-table th, .ranking-table td { padding: 10px; font-size: 0.95rem; }
         }
@@ -572,9 +574,10 @@
                     🧱 퇴적암 → (열과압력) → 💎 변성암<br>
                     💎 변성암 → (녹음) → 🌋 마그마<br>
                     <br>
-                    ⭐ 모든 암석 → (녹음) → 마그마<br>
                     ⭐ 화성암/퇴적암 → (열과압력) → 변성암<br>
-                    ⭐ 모든 암석 → (풍화침식) → 퇴적물
+                    ⭐ 화성암/변성암 → (녹음) → 마그마<br>
+                    ⭐ 모든 암석 → (풍화침식) → 퇴적물<br>
+                    ⚠️ 퇴적암은 녹음 불가! 변성암을 거쳐야 마그마가 돼요
                 </div>
             </div>
 
@@ -694,7 +697,7 @@
             <div class="modal-title">💡 잠깐! 힌트가 있어요!</div>
             <div class="modal-text" id="hintText"></div>
             <div class="hint-timer" id="hintTimer">10</div>
-            <p style="color: #999;">힌트를 확인하고 원래 카드로 다시 도전해보세요!</p>
+            <p style="color: #999;">힌트를 확인하고 기다려주세요...</p>
         </div>
     </div>
 
@@ -765,11 +768,11 @@
 
         const hallOfFameData = [
             // ↓↓↓ 여기부터 수정하세요! ↓↓↓
+
             { ban: "2-11", name: "문*윤", score: 170 },
             { ban: "2-3", name: "이*재", score: 150 },
-            { ban: "2-12", name: "강북구 그라시아", score: 140 },
-            { ban: "2-12", name: "박*람", score: 150 }
-            { ban: "2-8", name: "99세 할머니", score: 170 },
+            { ban: "2-12", name: "박*람", score: 150 },
+            { ban: "2-8", name: "99세 할머니", score: 150 },
             { ban: "2-7", name: "안*우", score: 250 },
             { ban: "2-8", name: "이*영", score: 140 },
             { ban: "2-7", name: "김*온", score: 200 },
@@ -861,7 +864,6 @@
             '퇴적암-열과압력': '변성암',
             '변성암-녹음': '마그마',
             '화성암-열과압력': '변성암',
-            '퇴적암-녹음': '마그마',
             '화성암-녹음': '마그마',
             '변성암-풍화침식': '퇴적물',
             '퇴적암-풍화침식': '퇴적물',
@@ -1237,6 +1239,7 @@ ${rock1Name} → ${sitName} → ${rock2Name}
                         clearInterval(hintInterval);
                         hintInterval = null;
                         document.getElementById('hintModal').classList.remove('show');
+                        doReshuffle();
                     }
                 }, 1000);
             } else {
