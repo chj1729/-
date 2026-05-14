@@ -19,11 +19,11 @@
     text-align: center; font-weight: 900; font-size: 20px;
     background: linear-gradient(90deg, #06b6d4, #22d3ee, #67e8f9);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
-  .tabs { display: flex; gap: 6px; margin-bottom: 6px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 8px; }
   .tab {
-    flex: 1; padding: 6px; text-align: center; font-weight: 700; font-size: 13px;
+    flex: 1; padding: 7px; text-align: center; font-weight: 700; font-size: 13px;
     background: rgba(30, 41, 59, 0.6); border: 1px solid #334155;
     border-radius: 10px; cursor: pointer; transition: all 0.2s;
     color: #94a3b8;
@@ -37,28 +37,27 @@
     background: rgba(15, 23, 42, 0.7);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(51, 65, 85, 0.6);
-    border-radius: 14px;
-    padding: 8px;
-    position: relative;
+    border-radius: 12px;
+    padding: 10px;
   }
   .hidden { display: none !important; }
 
   /* 상단 HUD */
   .hud {
     display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
   .hud-card {
     background: rgba(30,41,59,0.8); border: 1px solid #334155;
-    border-radius: 8px; padding: 4px 6px; text-align: center;
+    border-radius: 8px; padding: 5px; text-align: center;
   }
-  .hud-label { font-size: 10px; color: #94a3b8; }
-  .hud-value { font-size: 16px; font-weight: 900; color: #06b6d4; margin-top: 0; }
+  .hud-label { font-size: 11px; color: #94a3b8; }
+  .hud-value { font-size: 16px; font-weight: 900; color: #06b6d4; margin-top: 1px; }
   .hud-value.timer { color: #22d3ee; }
   .hud-value.score { color: #facc15; }
   .hud-value.combo { color: #f472b6; }
 
-  .timer-bar-wrap { height: 4px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .timer-bar-wrap { height: 5px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-top: 6px; }
   .timer-bar { height: 100%; background: linear-gradient(90deg, #06b6d4, #22d3ee); transition: width 0.2s linear; }
   .timer-bar.warn { background: linear-gradient(90deg, #facc15, #fb923c); }
   .timer-bar.danger { background: linear-gradient(90deg, #ef4444, #f87171); }
@@ -71,10 +70,9 @@
   }
 
   .weapon-badge {
-    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px;
-    border: 1px solid #06b6d4; font-weight: 700; font-size: 13px;
-    white-space: nowrap;
+    position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 20px;
+    border: 1px solid #06b6d4; font-weight: 700; font-size: 13px; white-space: nowrap;
   }
   .multiplier-badge {
     position: absolute; top: 8px; right: 8px;
@@ -86,25 +84,25 @@
   @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
 
   .hint {
-    text-align: center; padding: 4px; background: rgba(6,182,212,0.1);
-    border: 1px solid rgba(6,182,212,0.3); border-radius: 6px;
-    font-size: 11px; color: #67e8f9;
+    text-align: center; padding: 8px; background: rgba(6,182,212,0.1);
+    border: 1px solid rgba(6,182,212,0.3); border-radius: 8px;
+    font-size: 13px; color: #67e8f9;
   }
 
   .keys {
-    display: flex; justify-content: center; gap: 6px; margin-top: 4px;
-    font-size: 11px; color: #94a3b8;
+    display: flex; justify-content: center; gap: 8px; margin-top: 10px;
+    font-size: 12px; color: #94a3b8;
   }
   .key {
-    background: #1e293b; border: 1px solid #475569; border-bottom: 2px solid #334155;
-    padding: 1px 7px; border-radius: 5px; font-weight: 700; color: #e2e8f0;
+    background: #1e293b; border: 1px solid #475569; border-bottom: 3px solid #334155;
+    padding: 4px 10px; border-radius: 6px; font-weight: 700; color: #e2e8f0;
     font-family: monospace;
   }
 
   /* 버튼 */
   .btn {
-    padding: 8px 16px; border: none; border-radius: 8px;
-    font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
+    padding: 12px 22px; border: none; border-radius: 10px;
+    font-family: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
     transition: all 0.2s;
   }
   .btn-primary {
@@ -116,13 +114,13 @@
   .btn-secondary:hover { background: #475569; }
   .btn-danger { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; }
 
-  .center { text-align: center; margin-top: 6px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .center { text-align: center; margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 
   /* 메인 화면 */
-  .main-screen { text-align: center; padding: 12px 12px; position: relative; }
-  .main-title { font-size: 38px; margin-bottom: 4px; }
-  .main-desc { color: #94a3b8; margin-bottom: 12px; font-size: 13px; line-height: 1.6; }
-  .credit { position: absolute; top: 6px; right: 10px; font-size: 12px; color: #67e8f9; font-weight: 700; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); padding: 3px 8px; border-radius: 6px; }
+  .main-screen { position: relative; text-align: center; padding: 14px 12px; }
+  .author-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.4); border: 1px solid #06b6d4; color: #a5f3fc; padding: 4px 10px; border-radius: 14px; font-size: 11px; font-weight: 700; }
+  .main-title { font-size: 40px; margin-bottom: 4px; }
+  .main-desc { color: #94a3b8; margin-bottom: 12px; font-size: 13px; line-height: 1.55; }
 
   /* 명예의 전당 */
   .hof-list { list-style: none; margin-top: 12px; }
@@ -209,18 +207,18 @@
   <!-- 메인 -->
   <div class="panel" id="view-main">
     <div class="main-screen">
-      <div class="credit">제작 : 삼각산중 최형준T</div>
+      <div class="author-badge">제작 : 삼각산중 최형준T</div>
       <div class="main-title">🐟🎣</div>
       <h2 style="color:#06b6d4; margin-bottom:8px;">빛의 굴절 물고기 잡기</h2>
       <p class="main-desc">
         수면 위에서 무기를 발사해 물속의 물고기를 잡으세요!<br>
-        <span style="color:#22d3ee;">레이저는 물에서 굴절</span>되고, <span style="color:#fbbf24;">작살·화살·총알은 직진</span>합니다.<br>
+        <span style="color:#22d3ee;">레이저는 물에서 굴절</span>되고, <span style="color:#fbbf24;">총알은 직진</span>합니다.<br>
         제한시간 <strong style="color:#facc15;">2분</strong>, 모든 무기를 활용해 최고 점수에 도전!
       </p>
       <div class="center">
         <button class="btn btn-primary" id="btn-start">🚀 게임 시작</button>
       </div>
-      <div style="margin-top:10px; padding:8px 12px; background:rgba(30,41,59,0.5); border-radius:8px; font-size:12px; color:#94a3b8; text-align:left; line-height:1.6;">
+      <div style="margin-top:20px; padding:14px; background:rgba(30,41,59,0.5); border-radius:10px; font-size:13px; color:#94a3b8; text-align:left;">
         <strong style="color:#06b6d4;">📖 게임 방법</strong><br>
         • <span class="key">←</span> <span class="key">→</span> 키로 조준 각도 조절<br>
         • <span class="key">Space</span> 키로 발사<br>
@@ -316,7 +314,7 @@ const WEAPONS = {
   gun:     { name: "🔫 총알",   color: "#f472b6", straight: true  },
 };
 // 레이저 2 : 작살/화살/총 3 (비레이저 각 1) → 풀에서 균일추출
-const WEAPON_POOL = ["laser","laser","laser","harpoon","harpoon","arrow","arrow","gun","gun"];
+const WEAPON_POOL = ["laser","laser","laser","gun","gun"];
 
 // ── 상태 ─────────────────────────────────────────────────────────
 let view = "main";
@@ -734,25 +732,25 @@ function drawShooter() {
 }
 
 function drawAimLine() {
-  // 유도선은 항상 직선으로 표시 (레이저 발사체는 실제로 굴절되어 날아감)
   const rad = aimAngle * Math.PI / 180;
   const dx = Math.sin(rad), dy = Math.cos(rad);
   ctx.save();
-  ctx.setLineDash([4, 6]);
-  ctx.strokeStyle = "rgba(255,255,255,0.25)";
-  ctx.lineWidth = 1;
+  // 공기 중 점선 (더 진하게)
+  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = "rgba(255,255,255,0.75)";
+  ctx.lineWidth = 1.6;
   ctx.beginPath();
   ctx.moveTo(SHOOTER.x, SHOOTER.y+8);
-  // 공기 중 점선
   const tToSurf = (WATER_TOP - SHOOTER.y) / dy;
   const sx = SHOOTER.x + dx*tToSurf, sy = WATER_TOP;
   ctx.lineTo(sx, sy);
   ctx.stroke();
-  // 수중 점선 (항상 직선 연장)
+  // 수중 점선 (직선, 더 진하게)
   if (sx >= 0 && sx <= CW) {
     const tEnd = (CH - sy)/dy;
-    ctx.setLineDash([3, 8]);
-    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.setLineDash([4, 6]);
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(sx, sy);
     ctx.lineTo(sx+dx*tEnd, sy+dy*tEnd);
@@ -761,38 +759,49 @@ function drawAimLine() {
   ctx.restore();
 }
 
-// 스넬 법칙으로 물고기의 굴절된 시각상 위치(보이는 위치)를 계산
 function computeApparentPos(fx, fy) {
-  const airH = WATER_TOP - SHOOTER.y;
-  const waterH = fy - WATER_TOP;
-  if (waterH <= 0) return { x: fx, y: fy };
-  // bisection: SHOOTER.x ~ fx 사이에서 sx 찾기 (n_air*sin(theta_air) = n_water*sin(theta_water))
-  let lo = Math.min(SHOOTER.x, fx);
-  let hi = Math.max(SHOOTER.x, fx);
-  for (let i=0; i<24; i++) {
+  // 사수에서 보이는 위치 = 수면에서 굴절된 광선이 사수 눈에 들어오는 직선의 연장
+  // n_air * sin(theta_air) = n_water * sin(theta_water)
+  // 실제 광선: 물고기(fx,fy) -> 수면(sx,WATER_TOP) -> 사수(SHOOTER.x,SHOOTER.y)
+  if (fy <= WATER_TOP) return { x: fx, y: fy };
+  const sxA = SHOOTER.x, syA = SHOOTER.y;
+  const depth = fy - WATER_TOP;
+  const above = WATER_TOP - syA;
+  // bisection on horizontal offset of refraction point from straight line
+  let lo = Math.min(sxA, fx) - 400, hi = Math.max(sxA, fx) + 400;
+  // function: F(sx) = n_air*sin(theta_air) - n_water*sin(theta_water)
+  function F(sx) {
+    const dxA = sx - sxA, dyA = above;
+    const dxW = fx - sx, dyW = depth;
+    const sinA = dxA / Math.hypot(dxA, dyA);
+    const sinW = dxW / Math.hypot(dxW, dyW);
+    return N_AIR*sinA - N_WATER*sinW;
+  }
+  for (let i=0; i<40; i++) {
     const mid = (lo+hi)/2;
-    const dxa = mid - SHOOTER.x;
-    const dxw = fx - mid;
-    const sinA = dxa / Math.sqrt(dxa*dxa + airH*airH);
-    const sinW = dxw / Math.sqrt(dxw*dxw + waterH*waterH);
-    const diff = N_AIR * sinA - N_WATER * sinW;
-    if (diff < 0) lo = mid; else hi = mid;
+    if (F(mid) > 0) hi = mid; else lo = mid;
   }
   const sx = (lo+hi)/2;
-  // 시각상 위치: 공기 중 시선을 직선 연장, 깊이는 real_depth * (n_air/n_water)
-  const appY = WATER_TOP + waterH * (N_AIR / N_WATER);
-  const tApp = (appY - SHOOTER.y) / (WATER_TOP - SHOOTER.y);
-  const appX = SHOOTER.x + tApp * (sx - SHOOTER.x);
-  return { x: appX, y: appY };
+  // 사수->수면 방향을 그대로 연장하여 겉보기 깊이 계산
+  // 겉보기 깊이 = depth * (n_air/n_water) (수직 근사이지만 일반화 시에도 충분히 자연스러움)
+  const dxA = sx - sxA, dyA = above;
+  const t = (depth * (N_AIR/N_WATER)) / dyA; // 사수->수면 단위 시간당 dyA, 더 내려가게 t
+  // 실제로는 사수->수면 직선의 연장으로 사수가 인지: (sxA + (sx-sxA)*k, WATER_TOP + above*(k-1))
+  // 간단히: 사수에서 sx로 향하는 직선 위에서 깊이가 apparentDepth가 되는 점
+  const appDepth = depth * (N_AIR/N_WATER);
+  const totalY = above + appDepth;
+  const k = totalY / above;
+  const apX = sxA + (sx - sxA) * k;
+  const apY = WATER_TOP + appDepth;
+  return { x: apX, y: apY };
 }
 
-// 흐린(보이는) 물고기 그리기
 function drawApparentFish(f) {
   if (!f.alive) return;
+  if (f.y <= WATER_TOP) return;
+  const ap = computeApparentPos(f.x, f.y);
   const bob = Math.sin(f._bob || 0) * 2;
-  const real_y = f.y + bob;
-  if (real_y <= WATER_TOP) return;
-  const ap = computeApparentPos(f.x, real_y);
+  const x = ap.x, y = ap.y + bob;
   const s = f.size;
   let bodyColor, finColor;
   if (f.type === "large") { bodyColor = "#0891b2"; finColor = "#0e7490"; }
@@ -800,34 +809,31 @@ function drawApparentFish(f) {
   else { bodyColor = "#f97316"; finColor = "#c2410c"; }
   ctx.save();
   ctx.globalAlpha = 0.32;
-  // 몸통
   ctx.fillStyle = bodyColor;
   ctx.beginPath();
-  ctx.ellipse(ap.x, ap.y, s*0.6, s*0.4, 0, 0, Math.PI*2);
+  ctx.ellipse(x, y, s*0.6, s*0.4, 0, 0, Math.PI*2);
   ctx.fill();
-  // 꼬리
   ctx.fillStyle = finColor;
   ctx.beginPath();
-  const tx = ap.x - f.dir*s*0.55;
-  ctx.moveTo(tx, ap.y);
-  ctx.lineTo(tx - f.dir*s*0.35, ap.y - s*0.3);
-  ctx.lineTo(tx - f.dir*s*0.35, ap.y + s*0.3);
+  const tx = x - f.dir*s*0.55;
+  ctx.moveTo(tx, y);
+  ctx.lineTo(tx - f.dir*s*0.35, y - s*0.3);
+  ctx.lineTo(tx - f.dir*s*0.35, y + s*0.3);
   ctx.closePath();
   ctx.fill();
-  // 점선 외곽 (환영임을 강조)
-  ctx.globalAlpha = 0.55;
-  ctx.setLineDash([3, 3]);
-  ctx.strokeStyle = "rgba(255,255,255,0.6)";
+  // 점선 외곽 (환영 표시)
+  ctx.globalAlpha = 0.6;
+  ctx.setLineDash([3,3]);
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.ellipse(ap.x, ap.y, s*0.6, s*0.4, 0, 0, Math.PI*2);
+  ctx.ellipse(x, y, s*0.62, s*0.42, 0, 0, Math.PI*2);
   ctx.stroke();
   ctx.restore();
 }
 
 function drawFish(f) {
   if (!f.alive) return;
-  // 먼저 굴절된 "보이는 위치" 흐리게 그리기
   drawApparentFish(f);
   const bob = Math.sin(f._bob || 0) * 2;
   const x = f.x, y = f.y + bob;
