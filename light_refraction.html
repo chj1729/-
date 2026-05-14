@@ -1,1018 +1,1051 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0f172a">
-    <title>가상 광학 실험실: 빛의 굴절</title>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Noto Sans KR', 'sans-serif'] },
-                    colors: {
-                        medium1: '#1e293b', // 상단 매질 (기본 공기)
-                        medium2: '#0f172a', // 하단 매질 (기본 물)
-                        laser: '#06b6d4',   // 기본 레이저 (Cyan)
-                        tir: '#ef4444',     // 전반사 레이저 (Red)
-                    }
-                }
-            }
-        }
-    </script>
+<meta charset="UTF-8" />
+<title>물고기 잡기 - 빛의 굴절 게임</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e293b 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 6px;
+  }
+  .container { width: 100%; max-width: 520px; }
+  h1 {
+    text-align: center; font-weight: 900; font-size: 20px;
+    background: linear-gradient(90deg, #06b6d4, #22d3ee, #67e8f9);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .tabs { display: flex; gap: 6px; margin-bottom: 6px; }
+  .tab {
+    flex: 1; padding: 6px; text-align: center; font-weight: 700; font-size: 13px;
+    background: rgba(30, 41, 59, 0.6); border: 1px solid #334155;
+    border-radius: 10px; cursor: pointer; transition: all 0.2s;
+    color: #94a3b8;
+  }
+  .tab.active {
+    background: linear-gradient(135deg, #0891b2, #06b6d4);
+    color: #fff; border-color: #06b6d4;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+  }
+  .panel {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    border-radius: 14px;
+    padding: 8px;
+    position: relative;
+  }
+  .hidden { display: none !important; }
 
-    <!-- React & Babel -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  /* 상단 HUD */
+  .hud {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+    margin-bottom: 4px;
+  }
+  .hud-card {
+    background: rgba(30,41,59,0.8); border: 1px solid #334155;
+    border-radius: 8px; padding: 4px 6px; text-align: center;
+  }
+  .hud-label { font-size: 10px; color: #94a3b8; }
+  .hud-value { font-size: 16px; font-weight: 900; color: #06b6d4; margin-top: 0; }
+  .hud-value.timer { color: #22d3ee; }
+  .hud-value.score { color: #facc15; }
+  .hud-value.combo { color: #f472b6; }
 
-    <style>
-        :root {
-            --main-color: #06b6d4; /* Cyan-500 */
-            --bg-color: #020617; /* Slate-950 */
-        }
-        body {
-            background-color: var(--bg-color);
-            color: #f8fafc;
-            overscroll-behavior: none; /* 드래그 시 브라우저 바운스 방지 */
-        }
-        /* 글래스모피즘 유틸리티 */
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        /* 스크롤바 숨기기 */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-        /* 버튼 클릭 애니메이션 */
-        .btn-active { transition: transform 0.1s; }
-        .btn-active:active { transform: scale(0.95); }
-        
-        /* 레이저 광선 애니메이션 */
-        @keyframes pulse-glow {
-            0%, 100% { filter: drop-shadow(0 0 5px currentColor); }
-            50% { filter: drop-shadow(0 0 15px currentColor); }
-        }
-        .laser-beam { animation: pulse-glow 2s infinite ease-in-out; }
-    </style>
+  .timer-bar-wrap { height: 4px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .timer-bar { height: 100%; background: linear-gradient(90deg, #06b6d4, #22d3ee); transition: width 0.2s linear; }
+  .timer-bar.warn { background: linear-gradient(90deg, #facc15, #fb923c); }
+  .timer-bar.danger { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+  /* 게임 캔버스 */
+  .stage { position: relative; margin: 6px 0; }
+  canvas {
+    display: block; width: 100%; height: auto; background: #020617;
+    border: 1px solid #1e293b; border-radius: 10px;
+  }
+
+  .weapon-badge {
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px;
+    border: 1px solid #06b6d4; font-weight: 700; font-size: 13px;
+    white-space: nowrap;
+  }
+  .multiplier-badge {
+    position: absolute; top: 8px; right: 8px;
+    background: linear-gradient(135deg, #db2777, #f472b6);
+    padding: 6px 12px; border-radius: 20px; font-weight: 900;
+    font-size: 13px; box-shadow: 0 0 15px rgba(244,114,182,0.6);
+    animation: pulse 0.6s infinite alternate;
+  }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+
+  .hint {
+    text-align: center; padding: 4px; background: rgba(6,182,212,0.1);
+    border: 1px solid rgba(6,182,212,0.3); border-radius: 6px;
+    font-size: 11px; color: #67e8f9;
+  }
+
+  .keys {
+    display: flex; justify-content: center; gap: 6px; margin-top: 4px;
+    font-size: 11px; color: #94a3b8;
+  }
+  .key {
+    background: #1e293b; border: 1px solid #475569; border-bottom: 2px solid #334155;
+    padding: 1px 7px; border-radius: 5px; font-weight: 700; color: #e2e8f0;
+    font-family: monospace;
+  }
+
+  /* 버튼 */
+  .btn {
+    padding: 8px 16px; border: none; border-radius: 8px;
+    font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #0891b2, #06b6d4); color: #fff;
+    box-shadow: 0 4px 15px rgba(6,182,212,0.4);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(6,182,212,0.6); }
+  .btn-secondary { background: #334155; color: #e2e8f0; }
+  .btn-secondary:hover { background: #475569; }
+  .btn-danger { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; }
+
+  .center { text-align: center; margin-top: 6px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+  /* 메인 화면 */
+  .main-screen { text-align: center; padding: 12px 12px; position: relative; }
+  .main-title { font-size: 38px; margin-bottom: 4px; }
+  .main-desc { color: #94a3b8; margin-bottom: 12px; font-size: 13px; line-height: 1.6; }
+  .credit { position: absolute; top: 6px; right: 10px; font-size: 12px; color: #67e8f9; font-weight: 700; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); padding: 3px 8px; border-radius: 6px; }
+
+  /* 명예의 전당 */
+  .hof-list { list-style: none; margin-top: 12px; }
+  .hof-row {
+    display: grid; grid-template-columns: 50px 1fr auto auto; gap: 10px;
+    padding: 10px 14px; margin-bottom: 6px; align-items: center;
+    background: rgba(30,41,59,0.6); border: 1px solid #334155; border-radius: 8px;
+  }
+  .hof-row.gold { background: linear-gradient(135deg, rgba(250,204,21,0.15), rgba(30,41,59,0.6)); border-color: #facc15; }
+  .hof-row.silver { background: linear-gradient(135deg, rgba(203,213,225,0.12), rgba(30,41,59,0.6)); border-color: #cbd5e1; }
+  .hof-row.bronze { background: linear-gradient(135deg, rgba(251,146,60,0.12), rgba(30,41,59,0.6)); border-color: #fb923c; }
+  .hof-rank { font-size: 20px; font-weight: 900; text-align: center; }
+  .hof-name { font-weight: 700; }
+  .hof-score { color: #facc15; font-weight: 900; font-size: 17px; }
+  .hof-date { font-size: 11px; color: #64748b; }
+
+  /* 모달 */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    border: 1px solid #06b6d4; border-radius: 14px;
+    padding: 24px; max-width: 420px; width: 90%;
+    box-shadow: 0 0 40px rgba(6,182,212,0.4);
+  }
+  .modal h2 { color: #06b6d4; margin-bottom: 12px; font-size: 20px; }
+  .modal p { color: #cbd5e1; margin-bottom: 14px; line-height: 1.6; font-size: 14px; }
+  .modal input {
+    width: 100%; padding: 10px 14px; background: #1e293b; border: 1px solid #475569;
+    border-radius: 8px; color: #fff; font-family: inherit; font-size: 14px;
+    margin-bottom: 12px;
+  }
+  .modal input:focus { outline: 2px solid #06b6d4; }
+  .modal-stat {
+    background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3);
+    border-radius: 8px; padding: 12px; margin-bottom: 14px;
+  }
+  .modal-stat-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; }
+  .modal-stat-row strong { color: #facc15; }
+
+  .alert-danger {
+    background: rgba(239,68,68,0.15); border: 1px solid #ef4444;
+    border-radius: 8px; padding: 12px; margin-bottom: 14px;
+    color: #fca5a5; font-size: 13px;
+  }
+  .alert-success {
+    background: rgba(34,197,94,0.15); border: 1px solid #22c55e;
+    border-radius: 8px; padding: 12px; margin-bottom: 14px;
+    color: #86efac; font-size: 13px;
+  }
+
+  .miss-text {
+    position: absolute; color: #ef4444; font-weight: 900; font-size: 32px;
+    text-shadow: 0 0 10px #ef4444; pointer-events: none;
+    animation: missAnim 0.8s ease-out forwards;
+  }
+  .hit-text {
+    position: absolute; color: #facc15; font-weight: 900; font-size: 26px;
+    text-shadow: 0 0 10px #facc15; pointer-events: none;
+    animation: hitAnim 1s ease-out forwards;
+  }
+  @keyframes missAnim {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    to { opacity: 0; transform: translate(-50%, -120%) scale(1.5); }
+  }
+  @keyframes hitAnim {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    to { opacity: 0; transform: translate(-50%, -120%) scale(1.4); }
+  }
+</style>
 </head>
 <body>
-    <div id="root"></div>
-
-    <script type="text/babel">
-        // ==========================================
-        // [필수] 구글 앱스 스크립트 웹앱 URL을 입력하세요
-        // ==========================================
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzif-ltOFHlbk-etuDq-yU3F5JcCmpAtDBeMBOu8d0CQwH7Vzs-_Wzhqn0mNijYdtkH/exec"; 
-
-        // --- 데이터 정의 ---
-        const MEDIUMS = {
-            air: { name: '공기', n: 1.00, color: '#1e293b' },
-            water: { name: '물', n: 1.33, color: '#172554' },
-            glass: { name: '유리', n: 1.50, color: '#064e3b' },
-            diamond: { name: '다이아몬드', n: 2.42, color: '#4c1d95' }
-        };
-
-        const QUIZ_POOL = [
-            { id: 1, text: "빛이 한 물질에서 다른 물질로 진행할 때 경계면에서 꺾이는 현상을 굴절이라고 한다.", answer: "O", exp: "물질에 따라 빛의 속력이 달라지기 때문에 꺾이게 됩니다." },
-            { id: 2, text: "빛이 공기에서 물로 들어갈 때, 입사각보다 굴절각이 더 크다.", answer: "X", exp: "공기(밀도 낮음)에서 물(밀도 높음)로 갈 때 빛은 법선 쪽으로 꺾여 굴절각이 더 작아집니다." },
-            { id: 3, text: "빛이 경계면에 수직(입사각 0도)으로 입사하면 굴절되지 않고 직진한다.", answer: "O", exp: "입사각이 0도이면 꺾이지 않고 그대로 통과합니다." },
-            { id: 4, text: "입사각이 커지면 굴절각도 항상 같이 커진다.", answer: "O", exp: "입사각이 증가하면 굴절각도 함께 증가합니다." },
-            { id: 5, text: "빛이 공기에서 물로 들어갈 때, 입사각이 0도가 아니면 빛의 경로는 꺾인다.", answer: "O", exp: "수직으로 입사하지 않으면 빛은 속력 차이로 인해 경계면에서 꺾이게 됩니다." },
-            { id: 6, text: "빛의 굴절은 물질마다 빛의 진행 속력이 같기 때문에 발생한다.", answer: "X", exp: "물질마다 빛의 진행 속력이 다르기 때문에 굴절이 발생합니다." },
-            { id: 7, text: "물 속에 있는 동전이 실제보다 떠 보이는 것은 빛의 반사 때문이다.", answer: "X", exp: "물에서 공기로 나오는 빛이 굴절되어 우리 눈에 들어오기 때문입니다." },
-            { id: 8, text: "굴절률이 큰 물질일수록 그 안에서 빛의 속력은 더 느려진다.", answer: "O", exp: "굴절률이 클수록 빛을 더 많이 방해하여 속력이 느려집니다." },
-            { id: 9, text: "굴절은 매질의 경계면에서 빛이 반사되기 때문에 나타나는 현상이다.", answer: "X", exp: "굴절은 빛이 반사되는 것이 아니라, 매질을 통과하면서 속력 차이로 인해 진행 방향이 꺾이는 현상입니다." },
-            { id: 10, text: "볼록 렌즈로 물체를 확대해서 볼 수 있는 원리는 빛의 굴절을 이용한 것이다.", answer: "O", exp: "렌즈를 통과하는 빛이 굴절되어 초점이 모이거나 퍼지는 원리를 이용합니다." }
-        ];
-
-        // --- 아이콘 컴포넌트 (SVG) ---
-        const IconSettings = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>;
-
-        const App = () => {
-            // --- 상태 관리 ---
-            const [view, setView] = React.useState('intro'); // 'intro', 'sim', 'report'
-            
-            // --- 게임 모드 상태 ---
-            const [simMode, setSimMode] = React.useState('basic'); // 'basic', 'game'
-            const [fishPos, setFishPos] = React.useState({ x: 350, y: 380 });
-            const [gameState, setGameState] = React.useState('aiming'); // 'aiming', 'fired', 'hit'
-            const [gameAngle, setGameAngle] = React.useState(45);
-            const [gameHint, setGameHint] = React.useState('물고기의 과녁(🔴)을 정확히 맞춰보세요!');
-            
-            // 게임 점수 상태 추가
-            const [score, setScore] = React.useState(0);
-            const [combo, setCombo] = React.useState(0);
-            const [hasEarnedBadge, setHasEarnedBadge] = React.useState(false); // 1000점 뱃지 획득 여부
-            
-            // 시뮬레이션 상태
-            const [m1Key, setM1Key] = React.useState('air');
-            const [m2Key, setM2Key] = React.useState('water');
-            const [angle1, setAngle1] = React.useState(45); // 입사각 (0 ~ 89)
-            
-            // 학생 및 결과 상태
-            const [studentId, setStudentId] = React.useState('');
-            const [studentName, setStudentName] = React.useState('');
-            const [learning, setLearning] = React.useState('');
-            
-            // 퀴즈 상태
-            const [quizzes, setQuizzes] = React.useState([]);
-            const [quizAnswers, setQuizAnswers] = React.useState([null, null, null]);
-            const [quizResult, setQuizResult] = React.useState(null); // 제출 후 피드백용
-            
-            // UI 상태
-            const [alertData, setAlertData] = React.useState(null); // {title, msg, type}
-            const [showGuide, setShowGuide] = React.useState(false);
-            const [isLoading, setIsLoading] = React.useState(false);
-
-            // --- 캔버스 드래그 인터랙션 상태 ---
-            const svgRef = React.useRef(null);
-            const [isDragging, setIsDragging] = React.useState(false);
-
-            // --- 물리 엔진 연산 ---
-            const n1 = MEDIUMS[m1Key].n;
-            const n2 = MEDIUMS[m2Key].n;
-            
-            // 입사각을 라디안으로 변환
-            const rad1 = angle1 * (Math.PI / 180);
-            
-            // 스넬의 법칙: n1 * sin(θ1) = n2 * sin(θ2)
-            // sin(θ2) = (n1 / n2) * sin(θ1)
-            const sinTheta2 = (n1 / n2) * Math.sin(rad1);
-            
-            let angle2 = 0;
-            let isTIR = false; // 전반사 여부 (Total Internal Reflection)
-            
-            if (sinTheta2 > 1 || sinTheta2 < -1) {
-                isTIR = true;
-                angle2 = angle1; // 전반사 시 반사각 = 입사각
-            } else {
-                angle2 = Math.asin(sinTheta2) * (180 / Math.PI);
-            }
-
-            // --- 헬퍼 함수 ---
-            const showAlert = (title, msg, type='info') => setAlertData({ title, msg, type });
-            const closeAlert = () => setAlertData(null);
-
-            // 1000점 달성 감지
-            React.useEffect(() => {
-                if (score >= 1000 && !hasEarnedBadge) {
-                    setHasEarnedBadge(true);
-                    showAlert(
-                        "🌟 광학 마스터 등극!", 
-                        "목표 점수 1000점을 돌파하여 '빛의 굴절 마스터' 뱃지를 획득했습니다!\n굴절의 원리를 완벽하게 이해하셨네요.\n\n이제 하단의 [실험 완료 및 결과 작성] 버튼을 눌러 실험을 마무리해 보세요.", 
-                        "success"
-                    );
-                }
-            }, [score, hasEarnedBadge]);
-
-            // --- 캔버스 드래그 (Pointer Events) ---
-            const updateAngleFromEvent = React.useCallback((e) => {
-                // 게임 모드에서 발사 후에는 조작 불가
-                if (simMode === 'game' && gameState !== 'aiming') return;
-
-                const svg = svgRef.current;
-                if (!svg) return;
-
-                let pt = svg.createSVGPoint();
-                pt.x = e.clientX;
-                pt.y = e.clientY;
-
-                let cursorPoint;
-                try {
-                    cursorPoint = pt.matrixTransform(svg.getScreenCTM().inverse());
-                } catch(err) {
-                    return;
-                }
-
-                // 중심점 (250, 250)
-                let dx = 250 - cursorPoint.x;
-                let dy = 250 - cursorPoint.y;
-
-                // y축 깊이 제한 (수평선 이하로 내려가지 않도록)
-                if (dy < 10) dy = 10;
-                // 오른쪽 영역 터치 시 0도(수직)로 고정
-                if (dx < 0) dx = 0;
-
-                let newAngle = Math.atan2(dx, dy) * (180 / Math.PI);
-                newAngle = Math.max(0, Math.min(89.9, newAngle));
-                newAngle = Math.round(newAngle * 10) / 10; // 소수점 첫째자리
-
-                if (simMode === 'basic') {
-                    setAngle1(newAngle);
-                } else {
-                    newAngle = Math.min(80, newAngle); // 게임 모드는 최대 80도 제한
-                    setGameAngle(newAngle);
-                }
-            }, [simMode, gameState]);
-
-            const handlePointerDown = (e) => {
-                if (simMode === 'game' && gameState !== 'aiming') return;
-                setIsDragging(true);
-                e.currentTarget.setPointerCapture(e.pointerId);
-                updateAngleFromEvent(e);
-            };
-
-            const handlePointerMove = (e) => {
-                if (!isDragging) return;
-                updateAngleFromEvent(e);
-            };
-
-            const handlePointerUp = (e) => {
-                setIsDragging(false);
-                e.currentTarget.releasePointerCapture(e.pointerId);
-            };
-
-            // --- 물고기 게임 로직 ---
-            const spawnFish = () => {
-                const targetTheta2 = (25 + Math.random() * 20) * (Math.PI / 180); // 25~45도 (굴절 차이 극대화)
-                const depth = 140 + Math.random() * 50; // 140~190 깊이
-                setFishPos({ x: 250 + depth * Math.tan(targetTheta2), y: 250 + depth });
-                setGameState('aiming');
-                setGameAngle(45.0);
-                setGameHint('물고기의 과녁(🔴)을 정확히 맞춰보세요!');
-            };
-
-            // 모드 변경 시 물고기 초기화
-            React.useEffect(() => {
-                if (simMode === 'game') spawnFish();
-            }, [simMode]);
-
-            const fireLaser = () => {
-                const gameRad1 = gameAngle * (Math.PI / 180);
-                const gameSinTheta2 = (1.00 / 1.33) * Math.sin(gameRad1);
-                const gameRad2 = Math.asin(gameSinTheta2);
-                const dx = fishPos.x - 250;
-                const dy = fishPos.y - 250;
-                // 직선 방정식과 점 사이의 거리
-                const dist = Math.abs(dx * Math.cos(gameRad2) - dy * Math.sin(gameRad2));
-                const isForward = dx * Math.sin(gameRad2) + dy * Math.cos(gameRad2) > 0;
-                
-                if (isForward && dist < 10) { // 과녁 중심점 기준 반경 10 이내
-                    setGameState('hit');
-                    const earnedPoints = 100 + (combo * 20); // 콤보 보너스
-                    setScore(prev => prev + earnedPoints);
-                    setCombo(prev => prev + 1);
-                    setGameHint(`🎉 명중! (+${earnedPoints}점) ${combo > 0 ? `| 🔥 ${combo+1}연속 콤보!` : ''}`);
-                    
-                    setTimeout(() => {
-                        spawnFish();
-                    }, 2000);
-                } else {
-                    setGameState('fired');
-                    setCombo(0); // 콤보 초기화
-                    setScore(prev => Math.max(0, prev - 10)); // 감점
-                    
-                    const targetTheta2 = Math.atan2(dx, dy); // 실제 물고기가 있는 각도
-                    let hintMsg = "앗, 빗나갔어요! (-10점)";
-                    
-                    if (Math.abs(gameRad2 - targetTheta2) < 0.03) {
-                        hintMsg = "거의 다 맞았어요! 각도를 1~2도만 미세하게 조절하세요.";
-                    } else if (gameRad2 < targetTheta2) {
-                        hintMsg = "물고기 왼쪽으로 빗나갔습니다. 입사각을 키워보세요.";
-                    } else {
-                        hintMsg = "물고기 오른쪽으로 빗나갔습니다. 입사각을 줄여보세요.";
-                    }
-                    
-                    setGameHint(hintMsg);
-
-                    setTimeout(() => {
-                        setGameState(prev => prev === 'fired' ? 'aiming' : prev);
-                    }, 1500);
-                }
-            };
-
-            const startSimulation = () => setView('sim');
-            
-            const goReport = () => {
-                // 퀴즈 랜덤 추출 (3개)
-                const shuffled = [...QUIZ_POOL].sort(() => 0.5 - Math.random());
-                setQuizzes(shuffled.slice(0, 3));
-                setQuizAnswers([null, null, null]);
-                setQuizResult(null);
-                setView('report');
-            };
-
-            const handleQuizSelect = (index, selection) => {
-                const newAnswers = [...quizAnswers];
-                newAnswers[index] = selection;
-                setQuizAnswers(newAnswers);
-            };
-
-            const submitData = async () => {
-                if (!studentId || !studentName) {
-                    showAlert("입력 오류", "학번과 이름을 모두 입력해주세요.", "error");
-                    return;
-                }
-                if (quizAnswers.includes(null)) {
-                    showAlert("입력 오류", "모든 OX 퀴즈를 풀어주세요.", "error");
-                    return;
-                }
-                if (!learning || learning.trim().length < 10) {
-                    showAlert("입력 오류", "실험을 통해 알게 된 점을 10자 이상 성의있게 작성해주세요.", "error");
-                    return;
-                }
-
-                // 퀴즈 채점 (변수명을 finalQuizScore로 변경하여 게임 score와 충돌 방지)
-                let finalQuizScore = 0;
-                quizzes.forEach((q, idx) => {
-                    if (q.answer === quizAnswers[idx]) finalQuizScore += 33.3;
-                });
-                finalQuizScore = Math.round(finalQuizScore);
-
-                // 결과 상태 저장 (모달 표시용)
-                const resultsInfo = quizzes.map((q, idx) => ({
-                    correct: q.answer === quizAnswers[idx],
-                    exp: q.exp
-                }));
-                setQuizResult({ score: finalQuizScore, details: resultsInfo });
-
-                if (!GOOGLE_SCRIPT_URL) {
-                    showAlert("테스트 제출 성공", `제출 기능은 설정되지 않았습니다.\n(퀴즈: ${finalQuizScore}점 / 게임: ${score}점)\n\n교사 가이드를 참고하여 구글 시트를 연동하세요.`, "success");
-                    return;
-                }
-
-                setIsLoading(true);
-                try {
-                    const payload = {
-                        studentId,
-                        studentName,
-                        experiment: "빛의 굴절",
-                        setting: `매질1(${MEDIUMS[m1Key].name}) -> 매질2(${MEDIUMS[m2Key].name})`,
-                        resultData: `입사각 ${angle1}도 -> ${isTIR ? '전반사' : `굴절각 ${angle2.toFixed(1)}도`}`,
-                        quizScore: finalQuizScore,
-                        gameScore: score, // 게임 점수 데이터 추가
-                        learningText: learning
-                    };
-
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    showAlert("제출 완료!", `실험 결과가 성공적으로 기록되었습니다.\n퀴즈: ${finalQuizScore}점 / 게임: ${score}점`, "success");
-                    
-                } catch (error) {
-                    showAlert("제출 실패", "네트워크 오류가 발생했습니다. 다시 시도해주세요.", "error");
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
-            // --- 렌더링 영역 ---
-            
-            // SVG 도해용 변수 계산
-            const cx = 250; // 중심 x
-            const cy = 250; // 중심 y
-            
-            // [업데이트] 발사장치 위치 거리(캔버스 내부)와 실제 빛의 길이 분리
-            const emitterDist = 200; // 발사장치가 중심에서 떨어져 있는 거리 (캔버스 500x500 내부에 위치)
-            const rayLen = 600;      // 뻗어나가는 레이저 광선의 길이 (화면 끝까지)
-            
-            // --- 기본 모드 계산 ---
-            const startX = cx - emitterDist * Math.sin(rad1);
-            const startY = cy - emitterDist * Math.cos(rad1);
-
-            let endX, endY, rayColor;
-            if (isTIR) {
-                const radRefl = angle1 * (Math.PI / 180);
-                endX = cx + rayLen * Math.sin(radRefl);
-                endY = cy - rayLen * Math.cos(radRefl);
-                rayColor = "text-red-500";
-            } else {
-                const rad2 = angle2 * (Math.PI / 180);
-                endX = cx + rayLen * Math.sin(rad2);
-                endY = cy + rayLen * Math.cos(rad2);
-                rayColor = "text-cyan-400";
-            }
-
-            // --- 게임 모드 계산 ---
-            const gameRad1 = gameAngle * (Math.PI / 180);
-            const gameSinTheta2 = (1.00 / 1.33) * Math.sin(gameRad1);
-            const gameRad2 = Math.asin(gameSinTheta2);
-            
-            const gStartX = cx - emitterDist * Math.sin(gameRad1);
-            const gStartY = cy - emitterDist * Math.cos(gameRad1);
-            
-            // 발사 시 굴절선
-            const gEndX_refr = cx + rayLen * Math.sin(gameRad2);
-            const gEndY_refr = cy + rayLen * Math.cos(gameRad2);
-            
-            // 조준선 (직진할 경우)
-            const gEndX_straight = cx + rayLen * Math.sin(gameRad1);
-            const gEndY_straight = cy + rayLen * Math.cos(gameRad1);
-            
-            // 겉보기 위치 (수직 깊이가 굴절률에 반비례하여 얕아보임)
-            const apparentDepth = (fishPos.y - 250) / 1.33;
-            const apparentY = 250 + apparentDepth;
-            const apparentFishPos = { x: fishPos.x, y: apparentY };
-
-            return (
-                <div className="min-h-screen flex flex-col relative">
-                    {/* 상단 네비게이션 */}
-                    <header className="p-4 flex justify-between items-center z-10 glass-panel border-b-0 border-slate-700">
-                        <h1 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
-                            ✨ 가상 광학 실험실
-                        </h1>
-                        <button 
-                            onClick={() => setShowGuide(true)}
-                            className="btn-active flex items-center gap-2 text-sm md:text-base bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg border border-slate-600 transition-colors"
-                        >
-                            <IconSettings /> <span className="hidden sm:inline">교사 가이드</span>
-                        </button>
-                    </header>
-
-                    {/* 메인 컨텐츠 영역 */}
-                    <main className="flex-grow flex items-center justify-center p-4">
-                        <div className="w-full max-w-5xl">
-                            
-                            {/* --- STEP 1: INTRO --- */}
-                            {view === 'intro' && (
-                                <div className="glass-panel rounded-3xl p-8 md:p-12 text-center shadow-2xl mx-auto max-w-2xl transform transition-all">
-                                    <div className="w-20 h-20 mx-auto mb-6 bg-cyan-500/20 rounded-full flex items-center justify-center border border-cyan-500/50">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                                    </div>
-                                    <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-white">빛의 굴절 관찰하기</h2>
-                                    <p className="text-slate-300 mb-8 text-lg leading-relaxed">
-                                        빛이 서로 다른 두 물질의 경계면을 지날 때 왜 꺾일까요?<br/>
-                                        입사각을 조절해보고, 물질을 바꿔가며 빛의 신비한 경로를 직접 확인해 보세요!
-                                    </p>
-                                    <div className="bg-slate-800/50 rounded-xl p-4 mb-8 text-left border border-slate-700">
-                                        <h3 className="font-bold text-cyan-400 mb-2">🎯 실험 미션</h3>
-                                        <ul className="list-disc list-inside text-slate-300 space-y-1 text-sm md:text-base">
-                                            <li>입사각이 커질 때 굴절각은 어떻게 변하는지 관찰하기</li>
-                                            <li>공기에서 물, 물에서 공기로 갈 때 빛이 어느 쪽으로 꺾이는지 비교하기</li>
-                                            <li>'전반사' 현상이 일어나는 조건 찾아보기</li>
-                                        </ul>
-                                    </div>
-                                    <button 
-                                        onClick={startSimulation}
-                                        className="btn-active w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-4 px-12 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.4)] text-lg"
-                                    >
-                                        실험실 입장하기
-                                    </button>
-                                    <p className="mt-8 text-xs text-slate-500">Created by Yang DH</p>
-                                </div>
-                            )}
-
-                            {/* --- STEP 2: SIMULATION --- */}
-                            {view === 'sim' && (
-                                <div className="flex flex-col lg:flex-row gap-6">
-                                    {/* 조작 패널 */}
-                                    <div className="lg:w-1/3 glass-panel rounded-2xl p-6 shadow-xl flex flex-col gap-6 h-fit order-2 lg:order-1">
-                                        
-                                        {/* 모드 탭 */}
-                                        <div className="flex bg-slate-800 p-1 rounded-xl">
-                                            <button 
-                                                onClick={() => setSimMode('basic')}
-                                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${simMode === 'basic' ? 'bg-cyan-500 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-                                            >기본 실험</button>
-                                            <button 
-                                                onClick={() => setSimMode('game')}
-                                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${simMode === 'game' ? 'bg-cyan-500 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-                                            >🐟 물고기 잡기</button>
-                                        </div>
-
-                                        {simMode === 'basic' ? (
-                                            <>
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                                        <span className="bg-cyan-500 w-2 h-6 rounded-sm inline-block"></span>
-                                                        실험 조건 설정
-                                                    </h3>
-                                                    
-                                                    {/* 최우선 조작: 입사각 슬라이더 */}
-                                                    <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-600 mb-4">
-                                                        <div className="flex justify-between mb-2">
-                                                            <label className="text-sm font-bold text-white flex items-center gap-2">
-                                                                입사각 조절
-                                                                <span className="text-xs font-normal text-cyan-300 animate-pulse">💡 캔버스를 직접 드래그 해보세요!</span>
-                                                            </label>
-                                                            <span className="text-cyan-400 font-mono font-bold">{angle1}°</span>
-                                                        </div>
-                                                        <input 
-                                                            type="range" 
-                                                            min="0" max="89" step="0.1" value={angle1} 
-                                                            onChange={(e) => setAngle1(Number(e.target.value))}
-                                                            className="w-full h-4 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
-                                                        />
-                                                    </div>
-
-                                                    {/* 결과 수치 패널 */}
-                                                    <div className={`p-4 rounded-xl border mb-4 ${isTIR ? 'bg-red-900/20 border-red-500/50' : 'bg-cyan-900/20 border-cyan-500/50'}`}>
-                                                        <h4 className="text-sm text-slate-300 mb-2">현재 상태 결과</h4>
-                                                        {isTIR ? (
-                                                            <div>
-                                                                <div className="text-2xl font-bold text-red-400 mb-1 animate-pulse">전반사 발생!</div>
-                                                                <div className="text-sm text-red-200">빛이 굴절하지 못하고 100% 반사됩니다. (반사각: {angle2}°)</div>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex justify-between items-end">
-                                                                <span className="text-slate-400">굴절각</span>
-                                                                <span className="text-3xl font-mono font-bold text-cyan-400">{angle2.toFixed(1)}°</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="space-y-4">
-                                                        {/* 매질 1 선택 */}
-                                                        <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-600">
-                                                            <label className="block text-sm text-slate-400 mb-1">위쪽 물질 (매질 1)</label>
-                                                            <select 
-                                                                value={m1Key} 
-                                                                onChange={(e) => setM1Key(e.target.value)}
-                                                                className="w-full bg-slate-900 text-white border border-slate-600 rounded-lg p-2 outline-none focus:border-cyan-500"
-                                                            >
-                                                                {Object.entries(MEDIUMS).map(([k, v]) => (
-                                                                    <option key={k} value={k}>{v.name} (굴절률: {v.n})</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-
-                                                        {/* 매질 2 선택 */}
-                                                        <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-600">
-                                                            <label className="block text-sm text-slate-400 mb-1">아래쪽 물질 (매질 2)</label>
-                                                            <select 
-                                                                value={m2Key} 
-                                                                onChange={(e) => setM2Key(e.target.value)}
-                                                                className="w-full bg-slate-900 text-white border border-slate-600 rounded-lg p-2 outline-none focus:border-cyan-500"
-                                                            >
-                                                                {Object.entries(MEDIUMS).map(([k, v]) => (
-                                                                    <option key={k} value={k}>{v.name} (굴절률: {v.n})</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                                        <span className="bg-red-500 w-2 h-6 rounded-sm inline-block"></span>
-                                                        미션: 물고기 잡기
-                                                    </h3>
-                                                    
-                                                    {/* 슬라이더 패널을 최상단으로 이동 */}
-                                                    <div className="bg-slate-800/80 px-4 py-5 rounded-xl border border-slate-600 mb-3">
-                                                        <div className="flex justify-between mb-3">
-                                                            <label className="text-sm font-bold text-white flex flex-col sm:flex-row gap-1">
-                                                                레이저 조준각
-                                                                <span className="text-xs font-normal text-red-300 animate-pulse">💡 캔버스를 직접 드래그 해보세요!</span>
-                                                            </label>
-                                                            <span className="text-red-400 font-mono font-bold">{gameAngle.toFixed(1)}°</span>
-                                                        </div>
-                                                        <input 
-                                                            type="range" 
-                                                            min="0" max="80" step="0.1" value={gameAngle} 
-                                                            onChange={(e) => setGameAngle(Number(e.target.value))}
-                                                            disabled={gameState !== 'aiming'}
-                                                            className="w-full h-4 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-500 disabled:opacity-50"
-                                                        />
-                                                    </div>
-
-                                                    <button 
-                                                        onClick={fireLaser}
-                                                        disabled={gameState !== 'aiming'}
-                                                        className="btn-active w-full bg-red-500 hover:bg-red-400 disabled:bg-slate-600 text-white font-bold py-3 rounded-xl shadow-lg transition-colors mb-3"
-                                                    >
-                                                        {gameState === 'aiming' ? '🎯 발사!' : (gameState === 'hit' ? '🎉 명중!' : '앗, 빗나갔어요!')}
-                                                    </button>
-                                                    
-                                                    <p className={`text-sm mb-3 font-bold h-10 flex items-center ${gameState === 'hit' ? 'text-green-400' : 'text-amber-400'}`}>
-                                                        💡 {gameHint}
-                                                    </p>
-                                                    
-                                                    {/* 점수판 */}
-                                                    <div className="flex flex-col bg-slate-900 border border-slate-700 p-3 rounded-xl mb-3 shadow-inner relative overflow-hidden">
-                                                        {hasEarnedBadge && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent animate-[pulse_2s_infinite]"></div>}
-                                                        
-                                                        <div className="flex justify-between items-end mb-1 z-10">
-                                                            <div className="text-slate-300 font-bold">
-                                                                점수: <span className={`text-3xl font-mono ml-2 ${hasEarnedBadge ? 'text-yellow-400' : 'text-cyan-400'}`}>{score}</span><span className="text-sm ml-1">점</span>
-                                                            </div>
-                                                            <div className="text-right text-xs text-slate-400 font-bold">
-                                                                목표: 1000점
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        <div className="w-full h-2 bg-slate-800 rounded-full mt-1 z-10">
-                                                            <div 
-                                                                className={`h-full rounded-full transition-all duration-500 ${hasEarnedBadge ? 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'bg-cyan-500'}`} 
-                                                                style={{ width: `${Math.min(100, (score / 1000) * 100)}%` }}
-                                                            ></div>
-                                                        </div>
-
-                                                        <div className="absolute top-3 right-3 z-10">
-                                                            {combo > 1 && <div className="text-orange-400 font-bold text-sm animate-pulse">🔥 {combo} COMBO!</div>}
-                                                            {hasEarnedBadge && combo <= 1 && <div className="text-yellow-400 font-bold text-sm">🌟 마스터 뱃지</div>}
-                                                        </div>
-                                                    </div>
-
-                                                    <button 
-                                                        onClick={spawnFish}
-                                                        className="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-bold py-2 rounded-xl transition-colors mb-3"
-                                                    >
-                                                        🔄 물고기 위치 바꾸기
-                                                    </button>
-                                                    
-                                                    <p className="text-sm text-slate-400 leading-relaxed bg-slate-800/50 p-3 rounded-lg">
-                                                        <span className="text-red-400 font-bold">※ 규칙:</span> 진하게 보이는 위치(허상)에 속지 말고, 희미한 실제 물고기의 <span className="text-red-400 font-bold">빨간 점(🔴)</span>을 정확히 맞추세요!
-                                                    </p>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        <button 
-                                            onClick={goReport}
-                                            className="btn-active w-full mt-auto bg-white text-slate-900 font-bold py-3 rounded-xl hover:bg-slate-200 shadow-lg"
-                                        >
-                                            실험 완료 및 결과 작성 ➜
-                                        </button>
-                                    </div>
-
-                                    {/* SVG 캔버스 영역 (터치/드래그 이벤트 바인딩) */}
-                                    <div className="lg:w-2/3 glass-panel rounded-2xl overflow-hidden shadow-2xl border-slate-600 relative order-1 lg:order-2">
-                                        <svg 
-                                            ref={svgRef}
-                                            viewBox="0 0 500 500" 
-                                            className={`w-full h-full max-h-[50vh] lg:max-h-[80vh] bg-black block touch-none ${(simMode === 'game' && gameState !== 'aiming') ? 'cursor-not-allowed' : 'cursor-crosshair'}`}
-                                            style={{filter: 'drop-shadow(0 0 20px rgba(0,0,0,0.5))'}}
-                                            onPointerDown={handlePointerDown}
-                                            onPointerMove={handlePointerMove}
-                                            onPointerUp={handlePointerUp}
-                                            onPointerCancel={handlePointerUp}
-                                            onPointerLeave={handlePointerUp}
-                                        >
-                                            <defs>
-                                                <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
-                                                    <feGaussianBlur stdDeviation="4" result="blur" />
-                                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                                                </filter>
-                                                <filter id="glowRed" x="-20%" y="-20%" width="140%" height="140%">
-                                                    <feGaussianBlur stdDeviation="6" result="blur" />
-                                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                                                </filter>
-                                                <pattern id="grid" width="25" height="25" patternUnits="userSpaceOnUse">
-                                                    <path d="M 25 0 L 0 0 0 25" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1"/>
-                                                </pattern>
-                                            </defs>
-
-                                            {/* 배경 매질 */}
-                                            <rect x="0" y="0" width="500" height="250" fill={simMode === 'game' ? MEDIUMS['air'].color : MEDIUMS[m1Key].color} className="transition-colors duration-500" />
-                                            <rect x="0" y="250" width="500" height="250" fill={simMode === 'game' ? MEDIUMS['water'].color : MEDIUMS[m2Key].color} className="transition-colors duration-500" />
-                                            
-                                            {/* 배경 그리드 */}
-                                            <rect width="500" height="500" fill="url(#grid)" />
-
-                                            {simMode === 'basic' ? (
-                                                <>
-                                                    {/* 매질 라벨 */}
-                                                    <text x="20" y="30" fill="rgba(255,255,255,0.7)" fontSize="16" fontWeight="bold">{MEDIUMS[m1Key].name}</text>
-                                                    <text x="20" y="280" fill="rgba(255,255,255,0.7)" fontSize="16" fontWeight="bold">{MEDIUMS[m2Key].name}</text>
-
-                                                    {/* 중심축 (법선과 경계면) */}
-                                                    <line x1="0" y1="250" x2="500" y2="250" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
-                                                    <line x1="250" y1="0" x2="250" y2="500" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeDasharray="10,10" />
-
-                                                    {/* 반원 가이드 (각도기 모양) */}
-                                                    <circle cx="250" cy="250" r="150" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                                                    <circle cx="250" cy="250" r="100" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-
-                                                    {/* 입사각 호 그리기 */}
-                                                    {angle1 > 5 && (
-                                                        <path d={`M 250 150 A 100 100 0 0 0 ${250 - 100*Math.sin(rad1)} ${250 - 100*Math.cos(rad1)}`} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
-                                                    )}
-                                                    
-                                                    {/* 굴절/반사각 호 그리기 */}
-                                                    {!isTIR && angle2 > 5 && (
-                                                        <path d={`M 250 350 A 100 100 0 0 0 ${250 + 100*Math.sin(angle2*Math.PI/180)} ${250 + 100*Math.cos(angle2*Math.PI/180)}`} fill="none" stroke="rgba(6,182,212,0.5)" strokeWidth="2" />
-                                                    )}
-
-                                                    {/* 레이저 발사장치 (디자인 업그레이드) */}
-                                                    <g transform={`translate(${startX}, ${startY}) rotate(${-angle1})`} className="cursor-grab active:cursor-grabbing">
-                                                        {/* 본체 */}
-                                                        <rect x="-14" y="-45" width="28" height="32" rx="4" fill="#1e293b" stroke="#475569" strokeWidth="2" />
-                                                        {/* 본체 그립(미끄럼 방지 줄무늬) */}
-                                                        <line x1="-6" y1="-35" x2="-6" y2="-20" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
-                                                        <line x1="0" y1="-35" x2="0" y2="-20" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
-                                                        <line x1="6" y1="-35" x2="6" y2="-20" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
-                                                        {/* 총구 연결부 */}
-                                                        <path d="M -10 -13 L 10 -13 L 6 -5 L -6 -5 Z" fill="#334155" stroke="#64748b" strokeWidth="1" />
-                                                        {/* 뾰족한 노즐 팁 */}
-                                                        <path d="M -5 -5 L 5 -5 L 3 0 L -3 0 Z" fill="#94a3b8" />
-                                                        {/* 레이저 발광 포인트 */}
-                                                        <circle cx="0" cy="0" r="4" fill="#06b6d4" filter="url(#glowCyan)" />
-                                                        {/* 처음 사용자를 위한 드래그 힌트 애니메이션 */}
-                                                        {!isDragging && angle1 === 45 && (
-                                                            <circle cx="0" cy="0" r="24" fill="none" stroke="rgba(6,182,212,0.8)" strokeWidth="2" className="animate-ping" />
-                                                        )}
-                                                    </g>
-
-                                                    {/* 레이저 광선 (입사) */}
-                                                    <line x1={startX} y1={startY} x2={cx} y2={cy} stroke="#06b6d4" strokeWidth="4" className="laser-beam text-cyan-400" filter="url(#glowCyan)" strokeLinecap="round" />
-                                                    
-                                                    {/* 레이저 광선 (굴절 또는 반사) */}
-                                                    <line 
-                                                        x1={cx} y1={cy} 
-                                                        x2={endX} y2={endY} 
-                                                        stroke={isTIR ? "#ef4444" : "#06b6d4"} 
-                                                        strokeWidth="4" 
-                                                        className={`laser-beam ${rayColor}`} 
-                                                        filter={isTIR ? "url(#glowRed)" : "url(#glowCyan)"} 
-                                                        strokeLinecap="round" 
-                                                    />
-
-                                                    {/* 텍스트 라벨 (가운데 겹치지 않게 약간 오프셋) */}
-                                                    <text x={250 - 80*Math.sin(rad1/2)} y={250 - 80*Math.cos(rad1/2) - 10} fill="white" fontSize="14" textAnchor="middle">입사각</text>
-                                                    
-                                                    {isTIR ? (
-                                                        <text x={250 + 80*Math.sin(rad1/2)} y={250 - 80*Math.cos(rad1/2) - 10} fill="#fca5a5" fontSize="14" textAnchor="middle">반사각</text>
-                                                    ) : (
-                                                        <text x={250 + 80*Math.sin(angle2*Math.PI/180/2)} y={250 + 80*Math.cos(angle2*Math.PI/180/2) + 20} fill="#67e8f9" fontSize="14" textAnchor="middle">굴절각</text>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    {/* 겉보기 위치 (허상) */}
-                                                    <g opacity={gameState === 'aiming' ? "1" : "0.4"}>
-                                                        <text x={apparentFishPos.x} y={apparentFishPos.y} fontSize="32" textAnchor="middle" dominantBaseline="middle">🐟</text>
-                                                        <text x={apparentFishPos.x + 25} y={apparentFishPos.y} fill="#94a3b8" fontSize="12" dominantBaseline="middle" fontWeight="bold">👀 보이는 위치</text>
-                                                    </g>
-
-                                                    {/* 실제 물고기 위치 */}
-                                                    <g opacity={gameState === 'hit' ? "1" : "0.2"}>
-                                                        <text x={fishPos.x} y={fishPos.y} fontSize="32" textAnchor="middle" dominantBaseline="middle" className={gameState === 'hit' ? 'animate-bounce' : ''}>🐟</text>
-                                                        <text x={fishPos.x + 25} y={fishPos.y} fill="#fca5a5" fontSize="12" dominantBaseline="middle">🎯 실제 위치</text>
-                                                    </g>
-
-                                                    {/* 우기기 방지용 정밀 타겟 (과녁) */}
-                                                    <circle cx={fishPos.x} cy={fishPos.y} r="4" fill="#ef4444" className={gameState === 'hit' ? 'animate-ping' : ''} />
-                                                    <circle cx={fishPos.x} cy={fishPos.y} r="8" fill="none" stroke="#ef4444" strokeWidth="1" strokeDasharray="2,2" opacity="0.7" />
-
-                                                    {/* 조준선 (공기 중 입사 광선) */}
-                                                    <line x1={gStartX} y1={gStartY} x2={cx} y2={cy} stroke="#ef4444" strokeWidth="4" strokeLinecap="round" />
-                                                    
-                                                    {/* 레이저 발사장치 (디자인 업그레이드) */}
-                                                    <g transform={`translate(${gStartX}, ${gStartY}) rotate(${-gameAngle})`} className={gameState === 'aiming' ? "cursor-grab active:cursor-grabbing" : ""}>
-                                                        {/* 본체 */}
-                                                        <rect x="-14" y="-45" width="28" height="32" rx="4" fill="#1e293b" stroke="#475569" strokeWidth="2" />
-                                                        {/* 본체 그립(미끄럼 방지 줄무늬) */}
-                                                        <line x1="-6" y1="-35" x2="-6" y2="-20" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
-                                                        <line x1="0" y1="-35" x2="0" y2="-20" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
-                                                        <line x1="6" y1="-35" x2="6" y2="-20" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
-                                                        {/* 총구 연결부 */}
-                                                        <path d="M -10 -13 L 10 -13 L 6 -5 L -6 -5 Z" fill="#334155" stroke="#64748b" strokeWidth="1" />
-                                                        {/* 뾰족한 노즐 팁 */}
-                                                        <path d="M -5 -5 L 5 -5 L 3 0 L -3 0 Z" fill="#94a3b8" />
-                                                        {/* 레이저 발광 포인트 */}
-                                                        <circle cx="0" cy="0" r="4" fill="#ef4444" filter="url(#glowRed)" />
-                                                        {/* 처음 사용자를 위한 드래그 힌트 애니메이션 */}
-                                                        {!isDragging && gameAngle === 45 && gameState === 'aiming' && (
-                                                            <circle cx="0" cy="0" r="24" fill="none" stroke="rgba(239,68,68,0.8)" strokeWidth="2" className="animate-ping" />
-                                                        )}
-                                                    </g>
-
-                                                    {/* 항상 조준 가이드선 (직진 경로) 표시 */}
-                                                    <line x1={cx} y1={cy} x2={gEndX_straight} y2={gEndY_straight} stroke="#ef4444" strokeWidth="2" strokeDasharray="5,5" opacity="0.4" />
-                                                    
-                                                    {/* 발사된 레이저 (실제 굴절 경로) */}
-                                                    {gameState !== 'aiming' && (
-                                                        <line x1={cx} y1={cy} x2={gEndX_refr} y2={gEndY_refr} stroke="#ef4444" strokeWidth="4" className="laser-beam text-red-500" filter="url(#glowRed)" strokeLinecap="round" />
-                                                    )}
-
-                                                    {/* 명중 이펙트 */}
-                                                    {gameState === 'hit' && (
-                                                        <circle cx={fishPos.x} cy={fishPos.y} r="30" fill="none" stroke="#22c55e" strokeWidth="4" className="animate-ping" />
-                                                    )}
-                                                </>
-                                            )}
-                                        </svg>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* --- STEP 3: REPORT --- */}
-                            {view === 'report' && (
-                                <div className="glass-panel rounded-3xl p-6 md:p-10 shadow-2xl max-w-3xl mx-auto border-t-4 border-t-cyan-500">
-                                    <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white flex items-center gap-3">
-                                        📝 실험 결과 보고서
-                                        <span className="text-sm font-normal bg-slate-700 px-3 py-1 rounded-full">마지막 단계</span>
-                                    </h2>
-
-                                    {/* 내 정보 입력 */}
-                                    <div className="flex flex-col sm:flex-row gap-4 mb-8 bg-slate-800/50 p-4 rounded-xl border border-slate-600">
-                                        <div className="flex-1">
-                                            <label className="block text-sm text-slate-400 mb-1">학번 (예: 2101)</label>
-                                            <input 
-                                                type="number" value={studentId} onChange={e=>setStudentId(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:border-cyan-500 outline-none transition-colors"
-                                                placeholder="학번 입력" disabled={quizResult !== null}
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <label className="block text-sm text-slate-400 mb-1">이름</label>
-                                            <input 
-                                                type="text" value={studentName} onChange={e=>setStudentName(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:border-cyan-500 outline-none transition-colors"
-                                                placeholder="이름 입력" disabled={quizResult !== null}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* 랜덤 OX 퀴즈 */}
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-bold text-cyan-400 mb-4">🧠 개념 확인 퀴즈</h3>
-                                        <div className="space-y-4">
-                                            {quizzes.map((q, idx) => (
-                                                <div key={idx} className={`p-4 rounded-xl border ${quizResult ? (quizResult.details[idx].correct ? 'bg-green-900/20 border-green-500/50' : 'bg-red-900/20 border-red-500/50') : 'bg-slate-800 border-slate-600'}`}>
-                                                    <p className="text-white mb-3"><span className="font-bold text-cyan-500 mr-2">Q{idx+1}.</span>{q.text}</p>
-                                                    
-                                                    {/* 선택 버튼 */}
-                                                    {!quizResult && (
-                                                        <div className="flex gap-2">
-                                                            <button 
-                                                                onClick={() => handleQuizSelect(idx, 'O')}
-                                                                className={`flex-1 py-2 rounded-lg border font-bold transition-colors ${quizAnswers[idx] === 'O' ? 'bg-cyan-600 border-cyan-400 text-white' : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'}`}
-                                                            >O</button>
-                                                            <button 
-                                                                onClick={() => handleQuizSelect(idx, 'X')}
-                                                                className={`flex-1 py-2 rounded-lg border font-bold transition-colors ${quizAnswers[idx] === 'X' ? 'bg-cyan-600 border-cyan-400 text-white' : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'}`}
-                                                            >X</button>
-                                                        </div>
-                                                    )}
-
-                                                    {/* 결과 피드백 */}
-                                                    {quizResult && (
-                                                        <div className="mt-2 text-sm">
-                                                            {quizResult.details[idx].correct ? 
-                                                                <span className="text-green-400 font-bold flex items-center gap-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg> 정답입니다!</span> : 
-                                                                <span className="text-red-400 font-bold flex items-center gap-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg> 오답입니다. (정답: {q.answer})</span>
-                                                            }
-                                                            <p className="text-slate-400 mt-1">{quizResult.details[idx].exp}</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* 알게 된 점 */}
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-bold text-cyan-400 mb-2">💡 실험을 통해 알게 된 점</h3>
-                                        <textarea 
-                                            value={learning} onChange={e=>setLearning(e.target.value)}
-                                            className="w-full h-32 bg-slate-900 border border-slate-600 rounded-xl p-4 text-white focus:border-cyan-500 outline-none resize-none transition-colors"
-                                            placeholder="입사각과 굴절각의 관계, 매질에 따른 꺾임 정도의 변화 등 오늘 실험에서 새롭게 알게 된 내용을 자세히 적어보세요. (최소 10자)"
-                                            disabled={quizResult !== null}
-                                        ></textarea>
-                                    </div>
-
-                                    {/* 하단 버튼 */}
-                                    <div className="flex gap-4">
-                                        <button 
-                                            onClick={() => setView('sim')}
-                                            className="btn-active flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl transition-colors"
-                                        >
-                                            돌아가기
-                                        </button>
-                                        
-                                        {!quizResult ? (
-                                            <button 
-                                                onClick={submitData}
-                                                disabled={isLoading}
-                                                className="btn-active flex-[2] bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all flex justify-center items-center gap-2"
-                                            >
-                                                {isLoading ? (
-                                                    <><svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 제출 중...</>
-                                                ) : "결과 제출하기"}
-                                            </button>
-                                        ) : (
-                                            <button 
-                                                onClick={() => {
-                                                    setStudentId(''); setStudentName(''); setLearning(''); setView('intro');
-                                                }}
-                                                className="btn-active flex-[2] bg-white text-slate-900 font-bold py-4 rounded-xl transition-colors"
-                                            >
-                                                처음으로 (새로고침)
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                        </div>
-                    </main>
-
-                    {/* --- 전역 모달 UI (알림용) --- */}
-                    {alertData && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                            <div className="bg-slate-800 border border-slate-600 rounded-2xl p-6 w-full max-w-sm shadow-2xl transform scale-100 animate-[pulse_0.1s_ease-out]">
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto ${alertData.type === 'error' ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'}`}>
-                                    {alertData.type === 'error' ? (
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                    ) : (
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                                    )}
-                                </div>
-                                <h3 className="text-xl font-bold text-white text-center mb-2">{alertData.title}</h3>
-                                <p className="text-slate-300 text-center mb-6 whitespace-pre-wrap">{alertData.msg}</p>
-                                <button onClick={closeAlert} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-colors">
-                                    확인
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* --- 교사 가이드 모달 --- */}
-                    {showGuide && (
-                        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                            <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl">
-                                <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800 rounded-t-2xl">
-                                    <h3 className="text-xl font-bold text-cyan-400">⚙️ 구글 시트 연동 가이드 (교사용)</h3>
-                                    <button onClick={() => setShowGuide(false)} className="text-slate-400 hover:text-white">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                    </button>
-                                </div>
-                                <div className="p-6 overflow-y-auto space-y-4 text-sm text-slate-300">
-                                    <p>선생님, 이 앱은 학생들의 실험 결과와 퀴즈 점수를 구글 스프레드시트로 자동 수집할 수 있습니다. 아래 단계를 따라주세요.</p>
-                                    
-                                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                                        <h4 className="font-bold text-white mb-2">1. 구글 스프레드시트 준비</h4>
-                                        <ul className="list-decimal list-inside space-y-1">
-                                            <li>새 구글 스프레드시트를 만듭니다.</li>
-                                            <li>첫 번째 행(A1~H1)에 헤더를 작성하세요: <br/>
-                                                <span className="text-cyan-400">시간, 학번, 이름, 실험명, 설정, 결과, 퀴즈점수, 게임점수, 알게된점</span>
-                                            </li>
-                                        </ul>
-                                    </div>
-
-                                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                                        <h4 className="font-bold text-white mb-2">2. 앱스 스크립트 작성</h4>
-                                        <p className="mb-2">상단 메뉴 [확장 프로그램] > [Apps Script] 클릭 후 아래 코드를 모두 붙여넣으세요.</p>
-                                        <div className="relative">
-                                            <pre className="bg-black p-4 rounded-lg overflow-x-auto text-xs font-mono text-green-400">
-{`function doPost(e) {
-  try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    var data = JSON.parse(e.postData.contents);
-    
-    sheet.appendRow([
-      new Date(),
-      data.studentId,
-      data.studentName,
-      data.experiment,
-      data.setting,
-      data.resultData,
-      data.quizScore,
-      data.gameScore,
-      data.learningText
-    ]);
-    
-    return ContentService.createTextOutput(JSON.stringify({"result":"success"}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(error) {
-    return ContentService.createTextOutput(JSON.stringify({"result":"error", "error": error.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
+<div class="container">
+  <h1>🎣 빛의 굴절 - 물고기 잡기 🐟</h1>
+
+  <!-- 메인 탭 -->
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="main">🎮 시작하기</div>
+    <div class="tab" data-tab="hof">🏆 명예의 전당</div>
+  </div>
+
+  <!-- 메인 -->
+  <div class="panel" id="view-main">
+    <div class="main-screen">
+      <div class="credit">제작 : 삼각산중 최형준T</div>
+      <div class="main-title">🐟🎣</div>
+      <h2 style="color:#06b6d4; margin-bottom:8px;">빛의 굴절 물고기 잡기</h2>
+      <p class="main-desc">
+        수면 위에서 무기를 발사해 물속의 물고기를 잡으세요!<br>
+        <span style="color:#22d3ee;">레이저는 물에서 굴절</span>되고, <span style="color:#fbbf24;">작살·화살·총알은 직진</span>합니다.<br>
+        제한시간 <strong style="color:#facc15;">2분</strong>, 모든 무기를 활용해 최고 점수에 도전!
+      </p>
+      <div class="center">
+        <button class="btn btn-primary" id="btn-start">🚀 게임 시작</button>
+      </div>
+      <div style="margin-top:10px; padding:8px 12px; background:rgba(30,41,59,0.5); border-radius:8px; font-size:12px; color:#94a3b8; text-align:left; line-height:1.6;">
+        <strong style="color:#06b6d4;">📖 게임 방법</strong><br>
+        • <span class="key">←</span> <span class="key">→</span> 키로 조준 각도 조절<br>
+        • <span class="key">Space</span> 키로 발사<br>
+        • 라운드 시작 시 무기가 결정되면 그 라운드 끝까지 같은 무기 사용<br>
+        • <strong style="color:#fbbf24;">일반어 🐟</strong> 명중 시 라운드 종료, 다음 라운드 시작<br>
+        • <strong style="color:#a855f7;">희귀어 🐡</strong> 명중 시 <strong style="color:#f472b6;">15초간 점수 2배!</strong><br>
+        • <strong style="color:#22d3ee;">대형어 🐠</strong> 명중 시 보너스 점수
+      </div>
+    </div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div class="panel hidden" id="view-game">
+    <div class="hud">
+      <div class="hud-card">
+        <div class="hud-label">⏱ 남은 시간</div>
+        <div class="hud-value timer" id="hud-time">2:00</div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-label">⭐ 점수</div>
+        <div class="hud-value score" id="hud-score">0</div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-label">🔥 콤보</div>
+        <div class="hud-value combo" id="hud-combo">0</div>
+      </div>
+    </div>
+    <div class="timer-bar-wrap"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
+
+    <div class="stage">
+      <canvas id="game" width="600" height="520"></canvas>
+      <div class="weapon-badge" id="weapon-badge">🔦 레이저</div>
+      <div class="multiplier-badge hidden" id="mult-badge">⚡ 2X 점수 (15s)</div>
+    </div>
+
+    <div class="hint" id="hint">화살표 키로 조준하고 스페이스바로 발사하세요!</div>
+    <div class="keys">
+      <span class="key">←</span> <span class="key">→</span> 조준
+      <span style="margin:0 8px;">|</span>
+      <span class="key">Space</span> 발사
+    </div>
+
+    <div class="center">
+      <button class="btn btn-secondary" id="btn-quit">메인으로</button>
+    </div>
+  </div>
+
+  <!-- 명예의 전당 -->
+  <div class="panel hidden" id="view-hof">
+    <h2 style="text-align:center; color:#facc15; margin-bottom:12px;">🏆 명예의 전당 TOP 10</h2>
+    <p style="text-align:center; color:#94a3b8; font-size:12px; margin-bottom:8px;">
+      기본 명단 + 게임에서 등재한 점수가 함께 표시됩니다 (점수순 정렬)
+    </p>
+    <ol class="hof-list" id="hof-list"></ol>
+    <div class="center">
+      <button class="btn btn-secondary" id="btn-clear-local">내 로컬 기록 초기화</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   ★ 명예의 전당 데이터 (HALL OF FAME) ★
+   아래 배열을 GitHub에서 직접 수정하세요. (최대 10명까지 표시)
+   ──────────────────────────────────────────────────────────────────── */
+const HALL_OF_FAME = [
+  { name: "낚시왕",   score: 2500, date: "2026-05-01" },
+  { name: "물고기마스터", score: 2100, date: "2026-05-02" },
+  { name: "굴절박사", score: 1800, date: "2026-05-03" },
+  { name: "스나이퍼", score: 1500, date: "2026-05-04" },
+  { name: "광선검",   score: 1200, date: "2026-05-05" },
+  { name: "작살왕",   score: 1000, date: "2026-05-06" },
+  { name: "활쟁이",   score:  800, date: "2026-05-07" },
+  { name: "초보낚시꾼", score:  600, date: "2026-05-08" },
+];
+/* ════════════════════════════════════════════════════════════════════ */
+
+// ── 상수 ─────────────────────────────────────────────────────────
+const CW = 600, CH = 520;
+const WATER_TOP = 180;          // 수면 y좌표
+const WATER_BOTTOM = 490;
+const SHOOTER = { x: 300, y: 100 }; // 수면 위 (공기 중)
+const N_AIR = 1.00, N_WATER = 1.33;
+const GAME_TIME = 120; // 2분
+const MAX_ANGLE = 60;  // 좌우 최대 각도 (수직 아래 기준)
+const AIM_SPEED = 1.5; // 도/frame
+const PROJECTILE_SPEED = 9;
+
+const WEAPONS = {
+  laser:   { name: "🔦 레이저", color: "#22d3ee", straight: false },
+  harpoon: { name: "🔱 작살",   color: "#facc15", straight: true  },
+  arrow:   { name: "🏹 화살",   color: "#a3e635", straight: true  },
+  gun:     { name: "🔫 총알",   color: "#f472b6", straight: true  },
+};
+// 레이저 2 : 작살/화살/총 3 (비레이저 각 1) → 풀에서 균일추출
+const WEAPON_POOL = ["laser","laser","laser","harpoon","harpoon","arrow","arrow","gun","gun"];
+
+// ── 상태 ─────────────────────────────────────────────────────────
+let view = "main";
+let aimAngle = 0;          // 도 단위, 0=수직 아래
+let aimLeft = false, aimRight = false;
+let currentWeapon = "laser";
+let fishes = [];           // 한 라운드 동안 살아있는 물고기들
+let projectile = null;     // {x,y,segments:[{x1,y1,x2,y2}], idx, alive, weapon}
+let score = 0, combo = 0;
+let timeLeft = GAME_TIME;
+let timerInterval = null;
+let multiplierEnd = 0;     // ms timestamp
+let multiplierInterval = null;
+let gameActive = false;
+let rafId = null;
+let roundLocked = false;   // 라운드 종료 후 잠깐 잠금
+
+// 안전 검증용: 잡은 물고기 로그 (점수 검증)
+let caughtLog = [];        // {type, basePoints, multiplied(2x), earned}
+
+// ── DOM ──────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const canvas = $("game");
+const ctx = canvas.getContext("2d");
+
+// ── 탭 전환 ──────────────────────────────────────────────────────
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    if (gameActive) return; // 게임 중에는 탭 전환 막기
+    const t = tab.dataset.tab;
+    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x===tab));
+    if (t === "main") showView("main");
+    else if (t === "hof") { renderHOF(); showView("hof"); }
+  });
+});
+function showView(v) {
+  view = v;
+  $("view-main").classList.toggle("hidden", v!=="main");
+  $("view-game").classList.toggle("hidden", v!=="game");
+  $("view-hof").classList.toggle("hidden", v!=="hof");
+}
+
+// ── 명예의 전당 ──────────────────────────────────────────────────
+function getLocalHOF() {
+  try { return JSON.parse(localStorage.getItem("hof_local") || "[]"); }
+  catch(e) { return []; }
+}
+function saveLocalHOF(list) {
+  localStorage.setItem("hof_local", JSON.stringify(list));
+}
+function mergedHOF() {
+  const all = [...HALL_OF_FAME, ...getLocalHOF()];
+  all.sort((a,b) => b.score - a.score);
+  return all.slice(0, 10);
+}
+function renderHOF() {
+  const list = mergedHOF();
+  const ol = $("hof-list");
+  ol.innerHTML = "";
+  if (list.length === 0) {
+    ol.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">아직 등록된 기록이 없습니다.</p>';
+    return;
   }
-}`}
-                                            </pre>
-                                        </div>
-                                    </div>
+  list.forEach((e, i) => {
+    const li = document.createElement("li");
+    let cls = "hof-row";
+    if (i===0) cls += " gold";
+    else if (i===1) cls += " silver";
+    else if (i===2) cls += " bronze";
+    li.className = cls;
+    const medal = ["🥇","🥈","🥉"][i] || `${i+1}`;
+    li.innerHTML = `
+      <div class="hof-rank">${medal}</div>
+      <div class="hof-name">${escapeHtml(e.name)}</div>
+      <div class="hof-score">${e.score.toLocaleString()}점</div>
+      <div class="hof-date">${e.date || ""}</div>`;
+    ol.appendChild(li);
+  });
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
-                                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                                        <h4 className="font-bold text-white mb-2">3. 배포 및 URL 적용</h4>
-                                        <ul className="list-decimal list-inside space-y-1">
-                                            <li>우측 상단 <b>[배포]</b> > <b>[새 배포]</b>를 클릭합니다.</li>
-                                            <li>유형을 <b>[웹 앱]</b>으로 선택합니다.</li>
-                                            <li>액세스 권한을 <b>[모든 사용자]</b>로 설정하고 배포합니다.</li>
-                                            <li>생성된 <b>웹 앱 URL</b>을 복사합니다.</li>
-                                            <li>이 HTML 파일의 54번째 줄 <code className="bg-slate-900 px-1 text-cyan-400">const GOOGLE_SCRIPT_URL = "";</code> 의 따옴표 사이에 복사한 URL을 넣고 저장하면 완료됩니다!</li>
-                                        </ul>
-                                    </div>
-                                    <p className="text-center text-xs text-slate-500 pt-4 border-t border-slate-700 mt-6">Created by Yang DH</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
+$("btn-clear-local").addEventListener("click", () => {
+  if (confirm("로컬에 저장된 본인 기록을 모두 삭제하시겠습니까?\n(기본 명단은 유지됩니다)")) {
+    localStorage.removeItem("hof_local");
+    renderHOF();
+  }
+});
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+// ── 게임 시작/종료 ──────────────────────────────────────────────
+$("btn-start").addEventListener("click", startGame);
+$("btn-quit").addEventListener("click", () => {
+  if (confirm("게임을 종료하고 메인으로 돌아가시겠습니까?")) endGame(true);
+});
+
+function startGame() {
+  score = 0; combo = 0; timeLeft = GAME_TIME;
+  caughtLog = [];
+  multiplierEnd = 0;
+  projectile = null;
+  roundLocked = false;
+  gameActive = true;
+  updateHUD();
+  $("mult-badge").classList.add("hidden");
+  showView("game");
+  startRound();
+  timerInterval = setInterval(tickTimer, 1000);
+  rafId = requestAnimationFrame(gameLoop);
+}
+
+function endGame(skipModal=false) {
+  gameActive = false;
+  if (timerInterval) clearInterval(timerInterval);
+  if (multiplierInterval) clearInterval(multiplierInterval);
+  if (rafId) cancelAnimationFrame(rafId);
+  timerInterval = null; multiplierInterval = null; rafId = null;
+  if (!skipModal) showSubmitModal();
+  else showView("main");
+}
+
+function tickTimer() {
+  timeLeft--;
+  updateHUD();
+  if (timeLeft <= 0) endGame();
+}
+
+// ── 라운드 ───────────────────────────────────────────────────────
+function startRound() {
+  // 무기 결정 (라운드 시작 시 한번)
+  currentWeapon = WEAPON_POOL[Math.floor(Math.random() * WEAPON_POOL.length)];
+  $("weapon-badge").innerHTML = WEAPONS[currentWeapon].name;
+  $("weapon-badge").style.borderColor = WEAPONS[currentWeapon].color;
+
+  // 물고기 배치
+  fishes = [];
+  // 일반어 (필수, 한 마리)
+  fishes.push(makeFish("normal"));
+  // 대형어 (35% 확률)
+  if (Math.random() < 0.35) fishes.push(makeFish("large"));
+  // 희귀어 (30% 확률)
+  if (Math.random() < 0.30) fishes.push(makeFish("rare"));
+
+  aimAngle = 0;
+  projectile = null;
+  roundLocked = false;
+  $("hint").textContent = `${WEAPONS[currentWeapon].name} - 이번 라운드 동안 같은 무기를 사용합니다`;
+}
+
+function makeFish(type) {
+  // 물 속에 고정 배치, 겹치지 않게
+  const baseSize = type==="large" ? 44 : type==="rare" ? 16 : 32;
+  for (let tries=0; tries<30; tries++) {
+    const x = 80 + Math.random() * (CW - 160);
+    const y = WATER_TOP + 60 + Math.random() * (WATER_BOTTOM - WATER_TOP - 100);
+    const overlap = fishes.some(f => Math.hypot(f.x-x, f.y-y) < (f.size + baseSize));
+    if (!overlap) {
+      return { x, y, size: baseSize, type, dir: Math.random()<0.5?1:-1, alive:true };
+    }
+  }
+  // fallback
+  return { x: 100+Math.random()*(CW-200), y: WATER_TOP+80+Math.random()*200, size: baseSize, type, dir:1, alive:true };
+}
+
+// ── 조준/발사 ────────────────────────────────────────────────────
+window.addEventListener("keydown", (e) => {
+  if (!gameActive || view !== "game") return;
+  if (e.key === "ArrowLeft") { aimLeft = true; e.preventDefault(); }
+  if (e.key === "ArrowRight") { aimRight = true; e.preventDefault(); }
+  if (e.code === "Space") { fire(); e.preventDefault(); }
+});
+window.addEventListener("keyup", (e) => {
+  if (e.key === "ArrowLeft") aimLeft = false;
+  if (e.key === "ArrowRight") aimRight = false;
+});
+
+function fire() {
+  if (projectile && projectile.alive) return;
+  if (roundLocked) return;
+  const w = WEAPONS[currentWeapon];
+  const rad = aimAngle * Math.PI / 180;
+  // 방향: x = sin(angle), y = cos(angle) (아래쪽 +)
+  const dx = Math.sin(rad), dy = Math.cos(rad);
+  const segments = [];
+  let curX = SHOOTER.x, curY = SHOOTER.y;
+  let curDx = dx, curDy = dy;
+
+  if (w.straight) {
+    // 직진: 화면 끝까지 한 세그먼트
+    const tBottom = (CH - curY) / curDy;
+    const tRight  = curDx > 0 ? (CW - curX) / curDx : Infinity;
+    const tLeft   = curDx < 0 ? (0 - curX) / curDx : Infinity;
+    const t = Math.min(tBottom, tRight, tLeft);
+    segments.push({ x1:curX, y1:curY, x2:curX+curDx*t, y2:curY+curDy*t, dx:curDx, dy:curDy });
+  } else {
+    // 레이저: 수면에서 굴절
+    // 공기 중 세그먼트: SHOOTER → 수면
+    const tToSurf = (WATER_TOP - curY) / curDy;
+    const surfX = curX + curDx * tToSurf;
+    const surfY = WATER_TOP;
+    segments.push({ x1:curX, y1:curY, x2:surfX, y2:surfY, dx:curDx, dy:curDy });
+    if (surfX < 0 || surfX > CW) {
+      // 수면 도달 못함 (이론상 angle 범위 내에서는 도달)
+    } else {
+      // 굴절: 입사각 = aimAngle (수직 기준)
+      const theta1 = Math.abs(aimAngle) * Math.PI / 180;
+      const sinT2 = (N_AIR / N_WATER) * Math.sin(theta1);
+      const theta2 = Math.asin(Math.min(1, sinT2));
+      const sign = aimAngle >= 0 ? 1 : -1;
+      const ndx = sign * Math.sin(theta2);
+      const ndy = Math.cos(theta2);
+      const tBottom = (CH - surfY) / ndy;
+      const tRight  = ndx > 0 ? (CW - surfX) / ndx : Infinity;
+      const tLeft   = ndx < 0 ? (0 - surfX) / ndx : Infinity;
+      const t = Math.min(tBottom, tRight, tLeft);
+      segments.push({ x1:surfX, y1:surfY, x2:surfX+ndx*t, y2:surfY+ndy*t, dx:ndx, dy:ndy });
+    }
+  }
+
+  projectile = {
+    weapon: currentWeapon,
+    segments,
+    segIdx: 0,
+    t: 0,           // 현재 세그먼트 진행 비율
+    x: SHOOTER.x, y: SHOOTER.y,
+    alive: true,
+    trail: []
+  };
+}
+
+// ── 게임 루프 ────────────────────────────────────────────────────
+function gameLoop() {
+  // 조준 업데이트
+  if (aimLeft)  aimAngle = Math.max(-MAX_ANGLE, aimAngle - AIM_SPEED);
+  if (aimRight) aimAngle = Math.min( MAX_ANGLE, aimAngle + AIM_SPEED);
+
+  // 물고기 살짝 흔들림 (자리 고정이지만 약간 움직이는 느낌)
+  fishes.forEach(f => {
+    if (!f.alive) return;
+    f._bob = (f._bob || 0) + 0.08;
+  });
+
+  // 발사체 진행
+  if (projectile && projectile.alive) {
+    updateProjectile();
+  }
+
+  draw();
+  if (gameActive) rafId = requestAnimationFrame(gameLoop);
+}
+
+function updateProjectile() {
+  const p = projectile;
+  const seg = p.segments[p.segIdx];
+  // 세그먼트 길이
+  const len = Math.hypot(seg.x2-seg.x1, seg.y2-seg.y1);
+  const steps = Math.max(1, Math.ceil(PROJECTILE_SPEED));
+  for (let i=0; i<1; i++) {
+    p.t += PROJECTILE_SPEED / len;
+    if (p.t >= 1) {
+      // 다음 세그먼트로
+      if (p.segIdx + 1 < p.segments.length) {
+        p.segIdx++; p.t = 0;
+      } else {
+        // 도착: 명중 or 미스 판정
+        p.x = seg.x2; p.y = seg.y2;
+        finalizeShot();
+        return;
+      }
+    }
+    const s = p.segments[p.segIdx];
+    p.x = s.x1 + (s.x2-s.x1)*p.t;
+    p.y = s.y1 + (s.y2-s.y1)*p.t;
+    p.trail.push({x:p.x, y:p.y});
+    if (p.trail.length > 12) p.trail.shift();
+
+    // 진행 중 명중 체크 (모든 세그먼트에서)
+    for (const f of fishes) {
+      if (!f.alive) continue;
+      if (Math.hypot(p.x-f.x, p.y-f.y) < f.size*0.55) {
+        hitFish(f);
+        return;
+      }
+    }
+  }
+}
+
+function finalizeShot() {
+  // 명중 못함
+  projectile.alive = false;
+  combo = 0;
+  showFloatText("MISS", projectile.x, projectile.y, "miss");
+  $("hint").textContent = "빗나갔습니다! 콤보 초기화";
+  updateHUD();
+  setTimeout(() => { projectile = null; }, 400);
+}
+
+function hitFish(f) {
+  f.alive = false;
+  projectile.alive = false;
+  combo++;
+  const now = Date.now();
+  const isMult = now < multiplierEnd;
+  let base = 0;
+  if (f.type === "normal") base = 100;
+  else if (f.type === "large") base = 200;
+  else if (f.type === "rare") base = 300;
+  const comboBonus = (combo-1) * 20;
+  let earned = base + comboBonus;
+  if (isMult) earned *= 2;
+  score += earned;
+  caughtLog.push({
+    type: f.type,
+    base, comboBonus,
+    multiplied: isMult,
+    earned
+  });
+
+  // 희귀어: 2배 효과 발동
+  if (f.type === "rare") activateMultiplier();
+
+  showFloatText(`+${earned}${isMult?" x2":""}`, f.x, f.y, "hit");
+  $("hint").textContent = `${f.type==="normal"?"🐟":f.type==="large"?"🐠":"🐡"} 명중! +${earned}점 (콤보 ${combo})`;
+  updateHUD();
+  setTimeout(() => { projectile = null; }, 200);
+
+  // 일반어를 잡으면 라운드 종료
+  if (f.type === "normal") {
+    roundLocked = true;
+    setTimeout(() => {
+      if (gameActive) startRound();
+    }, 800);
+  }
+}
+
+function activateMultiplier() {
+  multiplierEnd = Date.now() + 15000;
+  $("mult-badge").classList.remove("hidden");
+  if (multiplierInterval) clearInterval(multiplierInterval);
+  multiplierInterval = setInterval(() => {
+    const remain = Math.ceil((multiplierEnd - Date.now())/1000);
+    if (remain <= 0) {
+      $("mult-badge").classList.add("hidden");
+      clearInterval(multiplierInterval);
+      multiplierInterval = null;
+    } else {
+      $("mult-badge").textContent = `⚡ 2X 점수 (${remain}s)`;
+    }
+  }, 200);
+  $("mult-badge").textContent = `⚡ 2X 점수 (15s)`;
+}
+
+// ── 렌더 ─────────────────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0,0,CW,CH);
+  // 하늘
+  const sky = ctx.createLinearGradient(0,0,0,WATER_TOP);
+  sky.addColorStop(0, "#0c1733");
+  sky.addColorStop(1, "#1e293b");
+  ctx.fillStyle = sky; ctx.fillRect(0,0,CW,WATER_TOP);
+  // 물
+  const water = ctx.createLinearGradient(0,WATER_TOP,0,CH);
+  water.addColorStop(0, "#0c4a6e");
+  water.addColorStop(1, "#020617");
+  ctx.fillStyle = water; ctx.fillRect(0,WATER_TOP,CW,CH-WATER_TOP);
+  // 수면 라인
+  ctx.strokeStyle = "rgba(34,211,238,0.6)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0,WATER_TOP); ctx.lineTo(CW,WATER_TOP); ctx.stroke();
+  // 수면 반짝임
+  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  for (let i=0;i<CW;i+=20) ctx.fillRect(i, WATER_TOP-1, 8, 2);
+
+  // 발사대/사수
+  drawShooter();
+
+  // 조준선 (점선)
+  drawAimLine();
+
+  // 물고기
+  fishes.forEach(drawFish);
+
+  // 발사체
+  if (projectile) drawProjectile();
+}
+
+function drawShooter() {
+  // 보트
+  ctx.fillStyle = "#7c2d12";
+  ctx.beginPath();
+  ctx.moveTo(SHOOTER.x-50, SHOOTER.y+18);
+  ctx.lineTo(SHOOTER.x+50, SHOOTER.y+18);
+  ctx.lineTo(SHOOTER.x+40, SHOOTER.y+34);
+  ctx.lineTo(SHOOTER.x-40, SHOOTER.y+34);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#92400e";
+  ctx.fillRect(SHOOTER.x-50, SHOOTER.y+15, 100, 4);
+
+  // 사수 머리
+  ctx.fillStyle = "#fbbf24";
+  ctx.beginPath(); ctx.arc(SHOOTER.x, SHOOTER.y-2, 9, 0, Math.PI*2); ctx.fill();
+  // 몸
+  ctx.fillStyle = "#1e40af";
+  ctx.fillRect(SHOOTER.x-7, SHOOTER.y+6, 14, 14);
+
+  // 무기 표시 (조준 방향)
+  const rad = aimAngle * Math.PI / 180;
+  const wx = SHOOTER.x + Math.sin(rad)*22;
+  const wy = SHOOTER.y + Math.cos(rad)*22;
+  ctx.strokeStyle = WEAPONS[currentWeapon].color;
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(SHOOTER.x, SHOOTER.y+8);
+  ctx.lineTo(wx, wy);
+  ctx.stroke();
+}
+
+function drawAimLine() {
+  // 유도선은 항상 직선으로 표시 (레이저 발사체는 실제로 굴절되어 날아감)
+  const rad = aimAngle * Math.PI / 180;
+  const dx = Math.sin(rad), dy = Math.cos(rad);
+  ctx.save();
+  ctx.setLineDash([4, 6]);
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(SHOOTER.x, SHOOTER.y+8);
+  // 공기 중 점선
+  const tToSurf = (WATER_TOP - SHOOTER.y) / dy;
+  const sx = SHOOTER.x + dx*tToSurf, sy = WATER_TOP;
+  ctx.lineTo(sx, sy);
+  ctx.stroke();
+  // 수중 점선 (항상 직선 연장)
+  if (sx >= 0 && sx <= CW) {
+    const tEnd = (CH - sy)/dy;
+    ctx.setLineDash([3, 8]);
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx+dx*tEnd, sy+dy*tEnd);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// 스넬 법칙으로 물고기의 굴절된 시각상 위치(보이는 위치)를 계산
+function computeApparentPos(fx, fy) {
+  const airH = WATER_TOP - SHOOTER.y;
+  const waterH = fy - WATER_TOP;
+  if (waterH <= 0) return { x: fx, y: fy };
+  // bisection: SHOOTER.x ~ fx 사이에서 sx 찾기 (n_air*sin(theta_air) = n_water*sin(theta_water))
+  let lo = Math.min(SHOOTER.x, fx);
+  let hi = Math.max(SHOOTER.x, fx);
+  for (let i=0; i<24; i++) {
+    const mid = (lo+hi)/2;
+    const dxa = mid - SHOOTER.x;
+    const dxw = fx - mid;
+    const sinA = dxa / Math.sqrt(dxa*dxa + airH*airH);
+    const sinW = dxw / Math.sqrt(dxw*dxw + waterH*waterH);
+    const diff = N_AIR * sinA - N_WATER * sinW;
+    if (diff < 0) lo = mid; else hi = mid;
+  }
+  const sx = (lo+hi)/2;
+  // 시각상 위치: 공기 중 시선을 직선 연장, 깊이는 real_depth * (n_air/n_water)
+  const appY = WATER_TOP + waterH * (N_AIR / N_WATER);
+  const tApp = (appY - SHOOTER.y) / (WATER_TOP - SHOOTER.y);
+  const appX = SHOOTER.x + tApp * (sx - SHOOTER.x);
+  return { x: appX, y: appY };
+}
+
+// 흐린(보이는) 물고기 그리기
+function drawApparentFish(f) {
+  if (!f.alive) return;
+  const bob = Math.sin(f._bob || 0) * 2;
+  const real_y = f.y + bob;
+  if (real_y <= WATER_TOP) return;
+  const ap = computeApparentPos(f.x, real_y);
+  const s = f.size;
+  let bodyColor, finColor;
+  if (f.type === "large") { bodyColor = "#0891b2"; finColor = "#0e7490"; }
+  else if (f.type === "rare") { bodyColor = "#a855f7"; finColor = "#7e22ce"; }
+  else { bodyColor = "#f97316"; finColor = "#c2410c"; }
+  ctx.save();
+  ctx.globalAlpha = 0.32;
+  // 몸통
+  ctx.fillStyle = bodyColor;
+  ctx.beginPath();
+  ctx.ellipse(ap.x, ap.y, s*0.6, s*0.4, 0, 0, Math.PI*2);
+  ctx.fill();
+  // 꼬리
+  ctx.fillStyle = finColor;
+  ctx.beginPath();
+  const tx = ap.x - f.dir*s*0.55;
+  ctx.moveTo(tx, ap.y);
+  ctx.lineTo(tx - f.dir*s*0.35, ap.y - s*0.3);
+  ctx.lineTo(tx - f.dir*s*0.35, ap.y + s*0.3);
+  ctx.closePath();
+  ctx.fill();
+  // 점선 외곽 (환영임을 강조)
+  ctx.globalAlpha = 0.55;
+  ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = "rgba(255,255,255,0.6)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(ap.x, ap.y, s*0.6, s*0.4, 0, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawFish(f) {
+  if (!f.alive) return;
+  // 먼저 굴절된 "보이는 위치" 흐리게 그리기
+  drawApparentFish(f);
+  const bob = Math.sin(f._bob || 0) * 2;
+  const x = f.x, y = f.y + bob;
+  const s = f.size;
+  let bodyColor, finColor;
+  if (f.type === "large") { bodyColor = "#0891b2"; finColor = "#0e7490"; }
+  else if (f.type === "rare") { bodyColor = "#a855f7"; finColor = "#7e22ce"; }
+  else { bodyColor = "#f97316"; finColor = "#c2410c"; }
+
+  ctx.save();
+  // 빛나는 효과 (희귀어)
+  if (f.type === "rare") {
+    ctx.shadowColor = "#c084fc"; ctx.shadowBlur = 14;
+  } else if (f.type === "large") {
+    ctx.shadowColor = "#22d3ee"; ctx.shadowBlur = 8;
+  }
+  // 몸통
+  ctx.fillStyle = bodyColor;
+  ctx.beginPath();
+  ctx.ellipse(x, y, s*0.6, s*0.4, 0, 0, Math.PI*2);
+  ctx.fill();
+  // 꼬리
+  ctx.fillStyle = finColor;
+  ctx.beginPath();
+  const tx = x - f.dir*s*0.55;
+  ctx.moveTo(tx, y);
+  ctx.lineTo(tx - f.dir*s*0.35, y - s*0.3);
+  ctx.lineTo(tx - f.dir*s*0.35, y + s*0.3);
+  ctx.closePath();
+  ctx.fill();
+  // 눈
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath(); ctx.arc(x + f.dir*s*0.3, y - s*0.1, s*0.1, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = "#000";
+  ctx.beginPath(); ctx.arc(x + f.dir*s*0.32, y - s*0.1, s*0.05, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // 라벨
+  if (f.type !== "normal") {
+    ctx.fillStyle = f.type==="rare" ? "#e9d5ff" : "#a5f3fc";
+    ctx.font = "bold 10px 'Noto Sans KR'";
+    ctx.textAlign = "center";
+    ctx.fillText(f.type==="rare" ? "희귀" : "대형", x, y - s*0.5 - 4);
+  }
+}
+
+function drawProjectile() {
+  const p = projectile;
+  const w = WEAPONS[p.weapon];
+  // 지나간 경로 (이전 세그먼트들 + 현재까지)
+  ctx.save();
+  ctx.strokeStyle = w.color;
+  ctx.lineWidth = p.weapon === "laser" ? 3 : 2;
+  ctx.lineCap = "round";
+  ctx.shadowColor = w.color;
+  ctx.shadowBlur = p.weapon === "laser" ? 15 : 6;
+  ctx.beginPath();
+  for (let i=0; i<p.segIdx; i++) {
+    const s = p.segments[i];
+    ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2);
+  }
+  const cs = p.segments[p.segIdx];
+  ctx.moveTo(cs.x1, cs.y1); ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  ctx.restore();
+
+  // 머리: 무기 형태
+  ctx.save();
+  if (p.weapon === "laser") {
+    // 발광 점
+    ctx.fillStyle = "#fff";
+    ctx.shadowColor = w.color; ctx.shadowBlur = 20;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+  } else {
+    const s = p.segments[p.segIdx];
+    const ang = Math.atan2(s.dy, s.dx);
+    ctx.translate(p.x, p.y); ctx.rotate(ang);
+    if (p.weapon === "harpoon") {
+      // 작살: 삼각촉 + 짧은 자루
+      ctx.fillStyle = "#facc15";
+      ctx.beginPath(); ctx.moveTo(10,0); ctx.lineTo(-2,-5); ctx.lineTo(-2,5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#a16207"; ctx.fillRect(-14,-1.5,12,3);
+    } else if (p.weapon === "arrow") {
+      // 화살: 촉 + 자루 + 깃
+      ctx.fillStyle = "#a3e635";
+      ctx.beginPath(); ctx.moveTo(8,0); ctx.lineTo(0,-3); ctx.lineTo(0,3); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#854d0e"; ctx.fillRect(-12,-1,12,2);
+      ctx.fillStyle = "#65a30d";
+      ctx.beginPath(); ctx.moveTo(-12,0); ctx.lineTo(-16,-4); ctx.lineTo(-16,4); ctx.closePath(); ctx.fill();
+    } else if (p.weapon === "gun") {
+      // 총알
+      ctx.fillStyle = "#f472b6";
+      ctx.beginPath();
+      ctx.moveTo(5,0); ctx.lineTo(-3,-2.5); ctx.lineTo(-3,2.5); ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#fce7f3"; ctx.fillRect(-3,-2.5,2,5);
+    }
+  }
+  ctx.restore();
+}
+
+// ── HUD/Float ────────────────────────────────────────────────────
+function updateHUD() {
+  const m = Math.floor(timeLeft/60), s = timeLeft%60;
+  $("hud-time").textContent = `${m}:${s.toString().padStart(2,"0")}`;
+  $("hud-score").textContent = score.toLocaleString();
+  $("hud-combo").textContent = combo;
+  const pct = (timeLeft/GAME_TIME)*100;
+  const bar = $("timer-bar");
+  bar.style.width = pct + "%";
+  bar.classList.toggle("warn", timeLeft<=30 && timeLeft>10);
+  bar.classList.toggle("danger", timeLeft<=10);
+}
+
+function showFloatText(text, x, y, kind) {
+  const div = document.createElement("div");
+  div.className = kind==="miss" ? "miss-text" : "hit-text";
+  div.textContent = text;
+  // 캔버스 좌표 → 화면 좌표
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = rect.width / CW, scaleY = rect.height / CH;
+  div.style.left = (rect.left + x*scaleX + window.scrollX) + "px";
+  div.style.top  = (rect.top  + y*scaleY + window.scrollY) + "px";
+  div.style.position = "absolute";
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), kind==="miss"?800:1000);
+}
+
+// ── 점수 제출 모달 (안티치트) ────────────────────────────────────
+function computeExpectedScore() {
+  return caughtLog.reduce((sum, c) => sum + c.earned, 0);
+}
+
+function showSubmitModal() {
+  const modal = document.createElement("div");
+  modal.className = "modal-bg";
+  const expected = computeExpectedScore();
+  const counts = { normal:0, large:0, rare:0 };
+  caughtLog.forEach(c => counts[c.type]++);
+
+  modal.innerHTML = `
+    <div class="modal">
+      <h2>🎉 게임 종료!</h2>
+      <div class="modal-stat">
+        <div class="modal-stat-row"><span>⭐ 최종 점수</span><strong>${score.toLocaleString()}점</strong></div>
+        <div class="modal-stat-row"><span>🐟 일반어</span><span>${counts.normal}마리</span></div>
+        <div class="modal-stat-row"><span>🐠 대형어</span><span>${counts.large}마리</span></div>
+        <div class="modal-stat-row"><span>🐡 희귀어</span><span>${counts.rare}마리</span></div>
+      </div>
+      <p>명예의 전당에 등재하시려면 이름을 입력하세요 (2~10자)</p>
+      <input type="text" id="hof-name-input" maxlength="10" placeholder="이름을 입력하세요" />
+      <div id="hof-error"></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" id="hof-submit" style="flex:1;">🏆 등재하기</button>
+        <button class="btn btn-secondary" id="hof-skip" style="flex:1;">건너뛰기</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const input = modal.querySelector("#hof-name-input");
+  input.focus();
+
+  modal.querySelector("#hof-skip").addEventListener("click", () => {
+    modal.remove();
+    showView("main");
+  });
+  modal.querySelector("#hof-submit").addEventListener("click", () => {
+    const name = input.value.trim();
+    const errBox = modal.querySelector("#hof-error");
+    errBox.innerHTML = "";
+    if (name.length < 2 || name.length > 10) {
+      errBox.innerHTML = `<div class="alert-danger">⚠️ 이름은 2~10자로 입력하세요.</div>`;
+      return;
+    }
+    // ★ 안티치트: 표시된 score와 caughtLog로 재계산한 점수가 같아야 등재
+    const expected = computeExpectedScore();
+    if (score !== expected) {
+      errBox.innerHTML = `
+        <div class="alert-danger">
+          🚫 <strong>편법 금지!</strong><br>
+          기록된 물고기와 점수가 일치하지 않습니다.<br>
+          정정당당하게 다시 도전해주세요.<br>
+          <span style="font-size:11px; color:#94a3b8;">
+            (표시 점수: ${score} / 실제 점수: ${expected})
+          </span>
+        </div>`;
+      return;
+    }
+    if (score <= 0) {
+      errBox.innerHTML = `<div class="alert-danger">⚠️ 0점은 등재할 수 없습니다.</div>`;
+      return;
+    }
+    // 등재
+    const today = new Date().toISOString().slice(0,10);
+    const local = getLocalHOF();
+    local.push({ name, score, date: today });
+    local.sort((a,b) => b.score - a.score);
+    saveLocalHOF(local.slice(0, 50)); // 로컬 최대 50개 보존
+    errBox.innerHTML = `<div class="alert-success">✅ 명예의 전당에 등재되었습니다!</div>`;
+    setTimeout(() => {
+      modal.remove();
+      // 명예의 전당 탭으로 이동
+      document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab==="hof"));
+      renderHOF();
+      showView("hof");
+    }, 1200);
+  });
+  // Enter 키 제출
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") modal.querySelector("#hof-submit").click();
+  });
+}
+
+// ── 초기화 ───────────────────────────────────────────────────────
+renderHOF();
+showView("main");
+// 초기 캔버스 한 번 그리기
+draw();
+</script>
 </body>
 </html>
