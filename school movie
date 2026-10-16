@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:'Gaegu',sans-serif; color:#2b2b45; padding:16px; min-height:100vh;
+         background:linear-gradient(160deg,#a0e7ff 0%,#c3b3ff 55%,#ffc3ec 100%); background-attachment:fixed; }
+  .wrap { max-width:480px; margin:0 auto; }
+  .title { font-family:'Jua',sans-serif; text-align:center; color:#3a2f6b; font-size:26px; margin:10px 0 4px; text-shadow:0 2px 0 #ffffffaa; }
+  .subtitle { text-align:center; color:#5a4f8a; font-size:16px; margin-bottom:16px; }
+  .card { background:#fff; border-radius:22px; padding:22px 20px; box-shadow:0 10px 25px rgba(90,70,160,.18); }
+  .step-tag { display:inline-block; background:#ffe08a; color:#8a5a00; font-family:'Jua',sans-serif; padding:4px 14px; border-radius:999px; font-size:14px; margin-bottom:14px; }
+  label { display:block; font-family:'Jua',sans-serif; font-size:17px; color:#3a2f6b; margin:16px 0 7px; }
+  input,select,textarea { width:100%; font-family:'Gaegu',sans-serif; font-size:17px; padding:12px 14px; border:2px solid #d9d2ff; border-radius:14px; background:#faf9ff; color:#2b2b45; outline:none; }
+  input:focus,select:focus,textarea:focus { border-color:#8c7bff; background:#fff; }
+  select:disabled { opacity:.75; }
+  textarea { resize:vertical; min-height:92px; line-height:1.5; }
+  .counter { text-align:right; font-size:13px; color:#8a80b5; margin-top:3px; }
+  .counter.over { color:#e4557a; font-weight:bold; }
+  .q-emoji { font-size:20px; margin-right:4px; }
+  .btn { width:100%; font-family:'Jua',sans-serif; font-size:19px; padding:15px; border:none; border-radius:16px; margin-top:22px; cursor:pointer; color:#fff; background:linear-gradient(135deg,#6c7bff,#a86bff); box-shadow:0 6px 14px rgba(120,100,255,.4); }
+  .btn:active { transform:translateY(2px); }
+  .btn.ghost { background:#f0eeff; color:#6a5acd; box-shadow:none; margin-top:10px; }
+  .btn.small { font-size:15px; padding:9px 14px; width:auto; margin:0; }
+  .btn:disabled { opacity:.6; }
+  .stars { display:flex; justify-content:center; gap:6px; font-size:38px; margin-top:6px; }
+  .star { cursor:pointer; filter:grayscale(100%); opacity:.45; transition:.1s; }
+  .star.on { filter:none; opacity:1; transform:scale(1.1); }
+  .rec-group { display:flex; gap:10px; }
+  .rec-group label { flex:1; text-align:center; margin:0; padding:12px; border:2px solid #d9d2ff; border-radius:14px; background:#faf9ff; cursor:pointer; }
+  .rec-group input { display:none; }
+  .rec-group label.sel { border-color:#8c7bff; background:#efeaff; }
+  .film-head { font-family:'Jua',sans-serif; font-size:20px; color:#3a2f6b; text-align:center; background:#fff3c4; padding:12px; border-radius:14px; margin-top:6px; }
+  .film-head.empty { background:#ffe3e3; color:#b05; font-size:16px; }
+  .tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .tab { flex:1; font-family:'Jua',sans-serif; font-size:16px; padding:11px; border:none; border-radius:14px; background:#ffffffaa; color:#6a5acd; cursor:pointer; }
+  .tab.active { background:#6c7bff; color:#fff; box-shadow:0 4px 10px rgba(120,100,255,.4); }
+  .hidden { display:none; }
+  .done { text-align:center; padding:20px 0; }
+  .done .big { font-size:56px; }
+  .done h2 { font-family:'Jua',sans-serif; color:#3a2f6b; }
+  .err { color:#e4557a; font-size:15px; margin-top:6px; text-align:center; min-height:20px; }
+  .muted { text-align:center; color:#8a80b5; }
+  .mine { background:#faf9ff; border:2px solid #e5e0ff; border-radius:16px; padding:14px; margin-bottom:12px; }
+  .mine .m-top { font-family:'Jua',sans-serif; color:#3a2f6b; font-size:17px; }
+  .mine .m-sub { color:#8a80b5; font-size:14px; margin:2px 0 8px; }
+  .mine .m-q { font-family:'Jua',sans-serif; color:#6a5acd; font-size:15px; margin-top:8px; }
+  .mine .m-a { font-size:16px; white-space:pre-wrap; }
+  .mine .m-foot { text-align:right; margin-top:10px; }
+  .welcome { text-align:center; font-family:'Jua',sans-serif; color:#3a2f6b; margin-bottom:10px; font-size:18px; }
+  .hint { text-align:center; color:#8a80b5; font-size:14px; margin-top:6px; }
+  .banner { background:#fff3c4; color:#8a5a00; font-family:'Jua',sans-serif; border-radius:14px; padding:10px 12px; text-align:center; margin-bottom:6px; }
+  .notice { background:#efeaff; border:2px dashed #b3a6ff; color:#5a4f8a; border-radius:14px; padding:12px; font-size:15px; margin:10px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">🎬 과학영화토의반</div>
+  <div class="subtitle">영화 감상문 작성방</div>
+
+  <!-- 로그인 -->
+  <div class="card" id="login">
+    <span class="step-tag">🔐 로그인</span>
+    <label>👤 이름을 선택하세요</label>
+    <select id="nameSel"><option value="">-- 불러오는 중... --</option></select>
+    <label>🔢 비밀번호 4자리</label>
+    <input id="pw" type="password" inputmode="numeric" maxlength="4" placeholder="●●●●">
+    <div class="hint">처음이라면 비밀번호는 <b>1234</b> 예요</div>
+    <div class="err" id="loginErr"></div>
+    <button class="btn" id="loginBtn" onclick="doLogin()">로그인 ✨</button>
+  </div>
+
+  <!-- ① 비밀번호 변경 -->
+  <div class="card hidden" id="pwChange">
+    <span class="step-tag">🔑 비밀번호 변경</span>
+    <div class="notice">첫 로그인이에요!<br>안전을 위해 초기 비밀번호(1234)를<br><b>본인 전화번호 뒷자리 4자리</b>로 바꿔 주세요.</div>
+    <label>🔢 새 비밀번호 (전화번호 뒷 4자리)</label>
+    <input id="newPw" type="password" inputmode="numeric" maxlength="4" placeholder="●●●●">
+    <label>🔢 한 번 더 입력</label>
+    <input id="newPw2" type="password" inputmode="numeric" maxlength="4" placeholder="●●●●">
+    <div class="err" id="pwErr"></div>
+    <button class="btn" id="pwBtn" onclick="doChangePw()">변경하기 ✨</button>
+  </div>
+
+  <!-- 앱 -->
+  <div class="card hidden" id="app">
+    <div class="welcome" id="welcome"></div>
+    <div class="tabs">
+      <button class="tab active" id="tabWrite" onclick="switchTab('write')">✍️ 감상문 작성</button>
+      <button class="tab" id="tabView" onclick="switchTab('view')">📖 내 감상문</button>
+    </div>
+
+    <!-- 작성 -->
+    <div id="paneWrite">
+      <div class="banner hidden" id="editBanner">✏️ 수정 중이에요 — 고친 뒤 다시 제출하면 저장돼요</div>
+      <label>📅 언제 감상했나요? (감상일 선택)</label>
+      <select id="dateSel" onchange="onDate()"><option value="">-- 감상일을 골라 주세요 --</option></select>
+      <div class="film-head empty" id="filmHead">감상일을 선택하면 영화가 나와요 🍿</div>
+
+      <div id="questions"></div>
+
+      <div id="extra" class="hidden">
+        <label>⭐ 이 영화에 별점을 준다면?</label>
+        <div class="stars" id="stars">
+          <span class="star" data-v="1">⭐</span><span class="star" data-v="2">⭐</span>
+          <span class="star" data-v="3">⭐</span><span class="star" data-v="4">⭐</span>
+          <span class="star" data-v="5">⭐</span>
+        </div>
+        <label>👍 친구에게 추천하고 싶나요?</label>
+        <div class="rec-group" id="recGroup">
+          <label><input type="radio" name="rec" value="추천해요"><span>추천해요 😄</span></label>
+          <label><input type="radio" name="rec" value="글쎄요"><span>글쎄요 🤔</span></label>
+        </div>
+        <div class="err" id="writeErr"></div>
+        <button class="btn" id="submitBtn" onclick="submitForm()">제출하기 ✨</button>
+        <button class="btn ghost hidden" id="cancelEditBtn" onclick="cancelEdit()">수정 취소</button>
+      </div>
+    </div>
+
+    <!-- 보기 -->
+    <div id="paneView" class="hidden"><div id="mineBox"></div></div>
+  </div>
+
+  <!-- 완료 -->
+  <div class="card hidden done" id="done">
+    <div class="big">🎉</div>
+    <h2 id="doneTitle">감상문이 제출되었어요!</h2>
+    <p>소중한 생각을 들려줘서 고마워요 😊</p>
+    <button class="btn" onclick="backToWrite()">계속 작성하기</button>
+    <button class="btn ghost" onclick="goView()">📖 내 감상문 보기</button>
+  </div>
+</div>
+
+<script>
+  const MAX = 200;
+  let SCHEDULE = [], QUESTIONS = {}, CURRENT = null, MINE = [], rating = 0, EDIT = false;
+  const $ = id => document.getElementById(id);
+  const WD = ['일','월','화','수','목','금','토'];
+
+  // 이름 목록
+  google.script.run.withSuccessHandler(function(names){
+    const sel = $('nameSel');
+    sel.innerHTML = '<option value="">-- 이름을 선택하세요 --</option>';
+    names.forEach(function(n){ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+  }).getStudents();
+
+  // 로그인
+  function doLogin(){
+    const name=$('nameSel').value, pw=$('pw').value.trim(), err=$('loginErr');
+    if(!name){ err.textContent='이름을 선택해 주세요!'; return; }
+    if(!/^\d{4}$/.test(pw)){ err.textContent='비밀번호 4자리 숫자를 입력해 주세요!'; return; }
+    err.textContent='';
+    const b=$('loginBtn'); b.disabled=true; b.textContent='확인 중... ⏳';
+    google.script.run
+      .withSuccessHandler(function(data){
+        b.disabled=false; b.textContent='로그인 ✨';
+        CURRENT={name:name, pw:pw};
+        if(data.mustChange){            // ① 초기 비번 → 변경 화면
+          $('login').classList.add('hidden'); $('pwChange').classList.remove('hidden');
+          window.scrollTo(0,0); return;
+        }
+        SCHEDULE=data.schedule; QUESTIONS=data.questions;
+        buildDateOptions();
+        $('welcome').textContent='안녕하세요, '+name+'님! 👋';
+        $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+        window.scrollTo(0,0);
+      })
+      .withFailureHandler(function(e){ b.disabled=false; b.textContent='로그인 ✨'; err.textContent=(e&&e.message)||'로그인에 실패했어요.'; })
+      .login(name, pw);
+  }
+
+  // ① 비밀번호 변경
+  function doChangePw(){
+    const p1=$('newPw').value.trim(), p2=$('newPw2').value.trim(), err=$('pwErr');
+    if(!/^\d{4}$/.test(p1)){ err.textContent='새 비밀번호 4자리 숫자를 입력해 주세요!'; return; }
+    if(p1!==p2){ err.textContent='두 번 입력한 비밀번호가 달라요!'; return; }
+    if(p1==='1234'){ err.textContent='1234가 아닌 번호로 바꿔 주세요!'; return; }
+    err.textContent='';
+    const b=$('pwBtn'); b.disabled=true; b.textContent='변경 중... ⏳';
+    google.script.run
+      .withSuccessHandler(function(){
+        alert('비밀번호가 변경됐어요!\n새 비밀번호로 다시 로그인해 주세요 😊');
+        $('pwChange').classList.add('hidden'); $('login').classList.remove('hidden');
+        $('pw').value=''; $('newPw').value=''; $('newPw2').value='';
+        b.disabled=false; b.textContent='변경하기 ✨'; window.scrollTo(0,0);
+      })
+      .withFailureHandler(function(e){ b.disabled=false; b.textContent='변경하기 ✨'; err.textContent=(e&&e.message)||'변경에 실패했어요.'; })
+      .changePassword(CURRENT.name, CURRENT.pw, p1);
+  }
+
+  function buildDateOptions(){
+    const sel=$('dateSel');
+    sel.innerHTML='<option value="">-- 감상일을 골라 주세요 --</option>';
+    SCHEDULE.forEach(function(s,i){
+      const d=new Date(s.date+'T00:00');
+      const o=document.createElement('option'); o.value=i; o.textContent=s.date+' ('+WD[d.getDay()]+')'; sel.appendChild(o);
+    });
+  }
+
+  // 감상일 → 영화 + 질문 + 글자수 카운터
+  function onDate(){
+    const i=$('dateSel').value, head=$('filmHead'), qbox=$('questions'), extra=$('extra');
+    qbox.innerHTML='';
+    if(i===''){ head.className='film-head empty'; head.textContent='감상일을 선택하면 영화가 나와요 🍿'; extra.classList.add('hidden'); return; }
+    const film=SCHEDULE[i].film;
+    head.className='film-head'; head.textContent='🍿 '+film;
+    const qs=QUESTIONS[film];
+    if(!qs){ head.className='film-head empty'; head.textContent='"'+film+'" 질문이 아직 없어요. 선생님께 알려주세요!'; extra.classList.add('hidden'); return; }
+    qs.forEach(function(q,idx){
+      if(!q) return;
+      const lab=document.createElement('label'); lab.innerHTML='<span class="q-emoji">💬</span>Q'+(idx+1)+'. '+q;
+      const ta=document.createElement('textarea'); ta.id='ans'+idx; ta.maxLength=MAX; ta.placeholder='여기에 생각을 자유롭게 적어 주세요 ('+MAX+'자 이내)';
+      const cnt=document.createElement('div'); cnt.className='counter'; cnt.id='cnt'+idx; cnt.textContent='0 / '+MAX+'자';
+      ta.addEventListener('input', function(){ cnt.textContent=ta.value.length+' / '+MAX+'자'; cnt.classList.toggle('over', ta.value.length>=MAX); });
+      qbox.appendChild(lab); qbox.appendChild(ta); qbox.appendChild(cnt);
+    });
+    extra.classList.remove('hidden');
+  }
+  function setCounter(idx){ const ta=$('ans'+idx), cnt=$('cnt'+idx); if(ta&&cnt){ cnt.textContent=ta.value.length+' / '+MAX+'자'; cnt.classList.toggle('over', ta.value.length>=MAX); } }
+
+  // 별점 / 추천
+  document.querySelectorAll('.star').forEach(function(s){
+    s.addEventListener('click', function(){ rating=parseInt(s.dataset.v);
+      document.querySelectorAll('.star').forEach(function(x){ x.classList.toggle('on', parseInt(x.dataset.v)<=rating); }); });
+  });
+  document.querySelectorAll('.rec-group label').forEach(function(l){
+    l.addEventListener('click', function(){ document.querySelectorAll('.rec-group label').forEach(function(x){ x.classList.remove('sel'); }); l.classList.add('sel'); });
+  });
+
+  function submitForm(){
+    const i=$('dateSel').value, err=$('writeErr');
+    if(i===''){ err.textContent='감상일을 선택해 주세요!'; return; }
+    const film=SCHEDULE[i].film, qs=QUESTIONS[film]||[];
+    const a0=($('ans0')||{}).value||'', a1=($('ans1')||{}).value||'', a2=($('ans2')||{}).value||'';
+    const recEl=document.querySelector('input[name="rec"]:checked');
+    if(!a0.trim()||!a1.trim()||!a2.trim()){ err.textContent='세 가지 질문에 모두 답해 주세요!'; return; }
+    if(a0.length>MAX||a1.length>MAX||a2.length>MAX){ err.textContent='답변은 각 '+MAX+'자 이내로 적어 주세요!'; return; }
+    if(rating===0){ err.textContent='별점을 선택해 주세요!'; return; }
+    if(!recEl){ err.textContent='추천 여부를 선택해 주세요!'; return; }
+    err.textContent='';
+    const btn=$('submitBtn'); btn.disabled=true; btn.textContent=EDIT?'수정 중... ⏳':'제출 중... ⏳';
+    google.script.run
+      .withSuccessHandler(function(){
+        $('doneTitle').textContent = EDIT ? '감상문이 수정되었어요!' : '감상문이 제출되었어요!';
+        $('app').classList.add('hidden'); $('done').classList.remove('hidden');
+        btn.disabled=false; btn.textContent='제출하기 ✨'; EDIT=false;
+        window.scrollTo(0,0);
+      })
+      .withFailureHandler(function(e){ btn.disabled=false; btn.textContent=EDIT?'수정 완료 ✨':'제출하기 ✨'; err.textContent=(e&&e.message)||'오류가 났어요.'; })
+      .submitForm({ name:CURRENT.name, pw:CURRENT.pw, date:SCHEDULE[i].date, film:film,
+        rating:rating, recommend:recEl.value,
+        q1:qs[0]||'', a1:a0.trim(), q2:qs[1]||'', a2:a1.trim(), q3:qs[2]||'', a3:a2.trim() });
+  }
+
+  function switchTab(t){
+    $('tabWrite').classList.toggle('active', t==='write');
+    $('tabView').classList.toggle('active', t==='view');
+    $('paneWrite').classList.toggle('hidden', t!=='write');
+    $('paneView').classList.toggle('hidden', t!=='view');
+    if(t==='view') loadMine();
+  }
+
+  function loadMine(){
+    $('mineBox').innerHTML='<p class="muted">불러오는 중... ⏳</p>';
+    google.script.run.withSuccessHandler(renderMine)
+      .withFailureHandler(function(){ $('mineBox').innerHTML='<p class="muted">불러오지 못했어요 😢</p>'; })
+      .getMySubmissions(CURRENT.name, CURRENT.pw);
+  }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function renderMine(list){
+    MINE=list||[]; const box=$('mineBox');
+    if(!MINE.length){ box.innerHTML='<p class="muted">아직 작성한 감상문이 없어요 ✨</p>'; return; }
+    box.innerHTML=MINE.map(function(m,idx){
+      return '<div class="mine">'+
+        '<div class="m-top">🍿 '+esc(m.film)+'  '+'⭐'.repeat(m.rating)+'</div>'+
+        '<div class="m-sub">관람일 '+esc(m.date)+' · '+esc(m.recommend)+' · 제출 '+esc(m.time)+'</div>'+
+        '<div class="m-q">Q1. '+esc(m.q1)+'</div><div class="m-a">'+esc(m.a1)+'</div>'+
+        '<div class="m-q">Q2. '+esc(m.q2)+'</div><div class="m-a">'+esc(m.a2)+'</div>'+
+        '<div class="m-q">Q3. '+esc(m.q3)+'</div><div class="m-a">'+esc(m.a3)+'</div>'+
+        '<div class="m-foot"><button class="btn small" onclick="startEdit('+idx+')">✏️ 수정</button></div>'+
+      '</div>';
+    }).join('');
+  }
+
+  // ② 수정: 작성 화면에 채워 넣기
+  function startEdit(idx){
+    const m=MINE[idx]; EDIT=true;
+    switchTab('write');
+    let di=SCHEDULE.findIndex(function(s){ return s.date===m.date && s.film===m.film; });
+    if(di<0){ SCHEDULE.push({date:m.date, film:m.film}); QUESTIONS[m.film]=QUESTIONS[m.film]||[m.q1,m.q2,m.q3]; buildDateOptions(); di=SCHEDULE.length-1; }
+    $('dateSel').value=di; onDate(); $('dateSel').disabled=true;
+    if($('ans0')) $('ans0').value=m.a1; if($('ans1')) $('ans1').value=m.a2; if($('ans2')) $('ans2').value=m.a3;
+    setCounter(0); setCounter(1); setCounter(2);
+    rating=parseInt(m.rating)||0;
+    document.querySelectorAll('.star').forEach(function(x){ x.classList.toggle('on', parseInt(x.dataset.v)<=rating); });
+    document.querySelectorAll('.rec-group label').forEach(function(l){
+      const r=l.querySelector('input'); const on=(r.value===m.recommend); r.checked=on; l.classList.toggle('sel', on);
+    });
+    $('editBanner').classList.remove('hidden');
+    $('cancelEditBtn').classList.remove('hidden');
+    $('submitBtn').textContent='수정 완료 ✨';
+    window.scrollTo(0,0);
+  }
+  function cancelEdit(){ EDIT=false; $('dateSel').disabled=false; resetWrite(); switchTab('view'); }
+
+  function resetWrite(){
+    $('editBanner').classList.add('hidden'); $('cancelEditBtn').classList.add('hidden');
+    $('submitBtn').textContent='제출하기 ✨'; $('dateSel').disabled=false;
+    $('dateSel').value=''; onDate(); rating=0;
+    document.querySelectorAll('.star').forEach(function(x){ x.classList.remove('on'); });
+    document.querySelectorAll('.rec-group label').forEach(function(x){ x.classList.remove('sel'); });
+    const r=document.querySelector('input[name="rec"]:checked'); if(r) r.checked=false;
+  }
+  function backToWrite(){ $('done').classList.add('hidden'); $('app').classList.remove('hidden'); resetWrite(); switchTab('write'); window.scrollTo(0,0); }
+  function goView(){ $('done').classList.add('hidden'); $('app').classList.remove('hidden'); switchTab('view'); window.scrollTo(0,0); }
+</script>
+</body>
+</html>
